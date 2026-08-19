@@ -70,6 +70,75 @@ faithful fallback everywhere else.
   consumer-review rule both take a dim view of it.
 - **Marketing opt-in** — an explicit, unchecked consent box, captured as its own
   column so the list is clean enough to hand to Klaviyo.
+- **Bazaarvoice Product Picker** — the public review can be written on this page
+  instead of chasing the customer to a retailer. Built but off; see below.
+
+## Bazaarvoice Product Picker (site-hosted)
+
+Built and wired, **switched off** until someone fills in two values from the
+Bazaarvoice Portal. The config block is near the top of the `<script>` in
+`index.html`:
+
+```js
+var BV = {
+  clientName:  '',                      // ← the blocker. Lowercase client name from BV
+  siteId:      'main_site',             // ← confirm the deployment zone in Site Manager
+  environment: 'production',            // 'staging' to test first
+  locale:      'en_US',
+  campaignId:  'bootz_qr_registration', // segments these reviews in BV reports
+  categoryId:  ''                       // optional; ignored when a family matches
+};
+```
+
+While `clientName` is blank the confirmation screen behaves exactly as it does
+today — the retailer hand-off (Home Depot / Lowe's / Menards / Amazon). Set it
+and the on-site picker becomes the primary call to action, with the retailer
+link kept as a secondary line underneath.
+
+**How it behaves.** `bv.js` is *not* loaded on page load. This page is opened
+from a QR code on a carton, and most people register and leave; pulling in
+Bazaarvoice — and its cookies — for all of them to serve the few who write a
+public review is the wrong trade. Instead the "Write a public review" button
+injects `<div data-bv-show="product_picker">` and appends `bv.js` on click.
+
+- `data-bv-inline="true"` — renders in place rather than a lightbox. A BV
+  lightbox inside a 390 px viewport is cramped, and inline sidesteps the
+  close-button-reveals-a-blank-page problem entirely.
+- `data-bv-campaign-id` — set, so this program is measurable in BV separately
+  from organic PDP reviews.
+- `data-bv-family-product-id` — we already know what they registered, so the
+  picker opens scoped to that product family instead of making them browse the
+  catalog. Sourced from `BV_FAMILY`, which maps our product names to BV
+  ExternalIds; **every entry is currently blank** — fill them from the BV product
+  catalog. Unmapped products fall back to the root category, which still works.
+- Never both `data-bv-family-product-id` and `data-bv-category-id` — BV throws a
+  console error if you set both.
+
+**Three prerequisites live outside this repo:**
+
+1. A Bazaarvoice Ratings & Reviews account with a deployment zone, which is where
+   `clientName` and `siteId` come from. Unverified — outbound access to
+   `apps.bazaarvoice.com` and `bootz.com` is blocked from the dev sandbox, so
+   whether Bootz has its own BV instance (as opposed to reviews reaching Home
+   Depot through the retailer's own BV) needs a look at the Portal.
+2. Product Picker enabled in the BV **Style Editor**. If the option isn't there,
+   BV Support has to turn it on.
+3. A BV **product feed** with products mapped to categories and product
+   families. Without those mappings the picker renders an empty list — this is
+   the step most likely to need real work, since it means the Bootz catalog has
+   to exist in BV with the same families as `BV_FAMILY`.
+
+**Known friction:** BV's submission form can't be pre-filled from the page, so a
+customer who already typed a review here has to retype it. The page softens this
+by showing their text back with a "Copy it" button, but it is still two forms.
+The only real fix is submitting server-side through the BV **Conversations API**
+instead of the picker — a different integration needing an API key, and it gives
+up the picker's product-selection UI. Worth costing out if the retype turns out
+to hurt completion.
+
+**Not review gating.** The picker is offered to everyone regardless of rating,
+same as the retailer link it replaces. On a low rating the "let us make it right"
+message moves above it; the invitation is never withheld.
 
 ## Environment variables
 

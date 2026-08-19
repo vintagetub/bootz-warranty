@@ -159,9 +159,25 @@
   .nextup{margin-top:24px;text-align:left;background:var(--grey-bg);border-radius:8px;padding:18px 18px 16px}
   .nextup h3{font-size:16px;color:var(--navy);margin-bottom:6px}
   .nextup p{margin:0 0 12px;font-size:14px;text-align:left;max-width:none}
-  .btn-out{display:block;text-align:center;background:var(--white);border:1.5px solid var(--navy);color:var(--navy);
-    border-radius:8px;padding:12px;font-size:15px;font-weight:500;text-decoration:none;transition:.15s}
+  .btn-out{display:block;width:100%;text-align:center;background:var(--white);border:1.5px solid var(--navy);color:var(--navy);
+    border-radius:8px;padding:12px;font-size:15px;font-weight:500;text-decoration:none;transition:.15s;
+    font-family:inherit;cursor:pointer}
   .btn-out:hover{background:var(--navy);color:var(--white)}
+  .alsolink{margin:10px 0 0!important;font-size:13px;color:var(--grey);text-align:center!important}
+  .alsolink a{color:var(--navy);font-weight:500}
+
+  /* The customer's own review text, ready to paste into the Bazaarvoice form */
+  .yourwords{background:var(--white);border:1px solid var(--line);border-radius:8px;
+    padding:11px 12px 12px;margin-bottom:12px}
+  .yourwords small{display:block;font-size:11.5px;color:var(--grey);font-weight:300;margin-bottom:4px}
+  .yourwords p{margin:0 0 9px;font-size:13.5px;color:var(--black);line-height:1.5;
+    max-height:96px;overflow:auto}
+  .yourwords button{background:none;border:0;padding:0;font-family:inherit;font-size:13px;font-weight:500;
+    color:var(--cyan-dark);cursor:pointer;text-decoration:underline}
+
+  /* Bazaarvoice injects its own styles; this just gives the picker room to breathe */
+  #bvPicker{margin-top:14px}
+
   .support{margin-top:20px;font-size:13.5px;color:var(--grey);font-weight:300}
   .support a{color:var(--navy);font-weight:500;text-decoration:none}
 
@@ -376,7 +392,23 @@
         <div class="nextup" id="nextUp" style="display:none">
           <h3>One more small thing?</h3>
           <p id="nextUpCopy">If you have 30 seconds, posting the same review where you bought it helps the next person choose with confidence.</p>
+
+          <!-- Your own words, ready to paste into the public form. Bazaarvoice's
+               submission form can't be pre-filled from the page, so the next
+               best thing is making the copy one tap away. -->
+          <div class="yourwords" id="yourWords" style="display:none">
+            <small>Your review</small>
+            <p id="yourWordsText"></p>
+            <button type="button" id="copyReview">Copy it</button>
+          </div>
+
+          <button type="button" class="btn-out" id="bvStart" style="display:none">Write a public review</button>
           <a class="btn-out" id="reviewLink" href="#" target="_blank" rel="noopener">Leave a review</a>
+
+          <!-- Bazaarvoice site-hosted Product Picker renders in here. -->
+          <div id="bvPicker" style="display:none"></div>
+
+          <p class="alsolink" id="alsoLink" style="display:none">Or post it on <a href="#" id="alsoLinkA" target="_blank" rel="noopener">the retailer's site</a>.</p>
         </div>
 
         <p class="support" id="supportBlock">
@@ -529,6 +561,93 @@
     'Amazon':{url:'https://www.amazon.com/s?k=bootz+industries', name:'Amazon'}
   };
 
+  /* ---- Bazaarvoice site-hosted Product Picker -------------------------------
+     Lets the customer post a real public review from this page instead of being
+     sent off to a retailer. Off until `clientName` is filled in — get the value
+     from the Bazaarvoice Portal (Site Manager), lowercase. Until then the page
+     falls back to the retailer links above, exactly as it does today.
+
+     `siteId` is the deployment zone ("main_site" is the default). Point
+     `environment` at 'staging' to test against the BV staging catalog first.
+
+     Two prerequisites live outside this file:
+       1. Product Picker must be switched on in the BV Style Editor (V2). If the
+          option isn't there, BV Support has to enable it.
+       2. The BV product feed must map products to categories / product families,
+          or the picker renders an empty list.
+     ------------------------------------------------------------------------- */
+  var BV = {
+    clientName:  '',                        // e.g. 'bootz' — blank disables the picker
+    siteId:      'main_site',
+    environment: 'production',              // 'staging' while testing
+    locale:      'en_US',
+    campaignId:  'bootz_qr_registration',   // segments these reviews in BV reports
+    categoryId:  ''                         // optional; ignored when a family matches below
+  };
+
+  /* Our product families → the ExternalId of any product in the matching BV
+     product family, so the picker opens already scoped to what they registered
+     instead of the whole catalog. Fill these from the BV product catalog; any
+     left blank fall back to the root category, which still works. */
+  var BV_FAMILY = {
+    'Aloha':'', 'Aloha Plus':'', 'Bootzcast':'', 'Maui':'', 'Maui Plus':'',
+    'Mauicast':'', 'Mauicast Plus':'', 'Honolulu':'', 'Kona':'', 'Cambridge':'',
+    'Americast tub':'', 'Freedom tub':'', 'ShowerCast':'', 'Americast shower base':'',
+    'NexTile':'', 'NexTile Pro':'', 'Freedom direct-to-stud walls':'',
+    'Passage glue-up walls':'', 'Aspirations glue-up walls':'', 'Standard wall kit':'',
+    'Azalea':'', 'Daffodil':'', 'Daisy':'', 'Garnet':'', 'Garnet 2':'',
+    'Laurel':'', 'Orchid':''
+  };
+
+  var bvEnabled = !!BV.clientName;
+  var bvScriptAdded = false;
+
+  function loadBvJs(){
+    if(bvScriptAdded) return;
+    bvScriptAdded = true;
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://apps.bazaarvoice.com/deployments/' + BV.clientName + '/' + BV.siteId +
+            '/' + BV.environment + '/' + BV.locale + '/bv.js';
+    document.head.appendChild(s);
+  }
+
+  /* Injects the picker on demand rather than on page load: this page is opened
+     from a QR code on packaging, so we don't pull in bv.js — or its cookies —
+     for the majority who never get as far as a public review. */
+  function showBvPicker(productFamily){
+    var box = document.getElementById('bvPicker');
+    if(box.firstChild) return;
+
+    var el = document.createElement('div');
+    el.setAttribute('data-bv-show', 'product_picker');
+    el.setAttribute('data-bv-inline', 'true');   // in-page, not a lightbox — kinder on a phone
+    if(BV.campaignId) el.setAttribute('data-bv-campaign-id', BV.campaignId);
+
+    // Never set both family and category — BV throws a console error if you do.
+    var familyId = BV_FAMILY[productFamily];
+    if(familyId)          el.setAttribute('data-bv-family-product-id', familyId);
+    else if(BV.categoryId) el.setAttribute('data-bv-category-id', BV.categoryId);
+
+    box.appendChild(el);
+    box.style.display = 'block';
+    loadBvJs();
+  }
+
+  document.getElementById('copyReview').addEventListener('click', function(){
+    var self = this, text = document.getElementById('yourWordsText').textContent;
+    function done(){ self.textContent = 'Copied'; setTimeout(function(){ self.textContent = 'Copy it'; }, 2000); }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done, function(){ self.textContent = 'Select and copy above'; });
+    } else {
+      // Older mobile Safari: fall back to selecting the text for them.
+      var r = document.createRange();
+      r.selectNodeContents(document.getElementById('yourWordsText'));
+      var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      self.textContent = 'Selected — press copy';
+    }
+  });
+
   /* ---- Submit ---- */
   var form = document.getElementById('regForm');
   var btn = document.getElementById('submitBtn');
@@ -580,9 +699,38 @@
 
         // Everyone gets the public-review hand-off, whatever they rated it.
         var link = REVIEW_LINKS[payload.purchasedFrom];
-        if(link){
-          document.getElementById('reviewLink').href = link.url;
-          document.getElementById('reviewLink').textContent = 'Review it on ' + link.name;
+        var retailerLink = document.getElementById('reviewLink');
+        var bvStart = document.getElementById('bvStart');
+
+        if(bvEnabled){
+          // On-site Product Picker is the primary route; the retailer link stays
+          // as a secondary option, since syndication out to a given retailer
+          // depends on the agreements BV has in place for them.
+          document.getElementById('nextUpCopy').textContent =
+            'If you have a minute, post it publicly — pick your product below and your review ' +
+            'helps the next person choose with confidence.';
+          bvStart.style.display = 'block';
+          retailerLink.style.display = 'none';
+
+          if(payload.review){
+            document.getElementById('yourWordsText').textContent = payload.review;
+            document.getElementById('yourWords').style.display = 'block';
+          }
+          if(link){
+            var also = document.getElementById('alsoLinkA');
+            also.href = link.url;
+            also.textContent = link.name;
+            document.getElementById('alsoLink').style.display = 'block';
+          }
+          bvStart.addEventListener('click', function(){
+            bvStart.style.display = 'none';
+            showBvPicker(payload.productType);
+            document.getElementById('bvPicker').scrollIntoView({behavior:'smooth', block:'start'});
+          });
+          document.getElementById('nextUp').style.display = 'block';
+        } else if(link){
+          retailerLink.href = link.url;
+          retailerLink.textContent = 'Review it on ' + link.name;
           document.getElementById('nextUp').style.display = 'block';
         }
         if(rating <= 3){
