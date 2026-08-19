@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Register Your Bootz Product</title>
+<meta name="description" content="Register your Bootz bathtub, shower base, wall kit or sink to put your warranty on file — and tell us how it went in." />
+<meta name="robots" content="noindex" />
+<meta name="theme-color" content="#002D4B" />
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+<style>
+  /* Bootz 2022 Brand Guidelines
+     Web:  brand cyan #2FC0CC · highlight #002D4B · button #000000
+     Bg:   #FFFFFF / #EBEBEC / #64676C
+     Type: Helvetica Neue Lt Std — Light (body) / Roman (subheads) / Bold (titles)
+     Case: Title and Sentence case only. No all-caps, small-caps or all-lowercase.
+     Logo: black or white only; white is preferred over dark/brand backgrounds. */
+  :root{
+    --cyan:#2FC0CC;
+    --cyan-dark:#1FA3AE;
+    --navy:#002D4B;
+    --navy-deep:#00223A;
+    --black:#000000;
+    --grey:#64676C;
+    --grey-bg:#EBEBEC;
+    --white:#FFFFFF;
+    --line:#D3D4D6;
+    --radius:10px;
+    --shadow:0 12px 44px rgba(0,45,75,.13);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+  body{
+    font-family:'Helvetica Neue','HelveticaNeue',Helvetica,Arial,sans-serif;
+    font-weight:300;                      /* Helvetica Neue Light for paragraph copy */
+    color:var(--black);background:var(--grey-bg);line-height:1.6;font-size:16px;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-weight:700;letter-spacing:-.015em;line-height:1.15}
+  a{color:var(--navy)}
+  .wrap{max-width:640px;margin:0 auto;padding:0 18px}
+  .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+  /* ---------- Hero ---------- */
+  .hero{background:var(--navy);color:var(--white);padding:38px 0 96px;position:relative;overflow:hidden}
+  .hero::before{content:"";position:absolute;left:0;right:0;top:0;height:5px;background:var(--cyan)}
+  .hero::after{
+    content:"";position:absolute;right:-160px;top:-90px;width:420px;height:420px;border-radius:50%;
+    background:radial-gradient(circle, rgba(47,192,204,.30) 0%, rgba(47,192,204,0) 68%);pointer-events:none;
+  }
+  .hero .wrap{position:relative;z-index:1;text-align:center}
+  .logo{height:46px;width:auto;margin:6px auto 22px;display:block}
+  .pill{display:inline-block;font-size:12.5px;font-weight:400;letter-spacing:.02em;
+    color:var(--white);background:rgba(47,192,204,.20);border:1px solid rgba(47,192,204,.55);
+    border-radius:999px;padding:5px 15px;margin-bottom:18px}
+  .hero h1{font-size:30px;margin-bottom:12px}
+  .hero .lede{font-weight:300;color:#CFE0EA;max-width:490px;margin:0 auto;font-size:16px}
+  .since{margin-top:16px;font-size:13px;color:#8FB3C6;font-weight:300}
+
+  /* ---------- Card ---------- */
+  .card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);
+    margin-top:-62px;position:relative;z-index:2;padding:30px 26px 34px;border:1px solid #E4E5E6}
+
+  .benefits{display:flex;gap:10px;margin-bottom:26px;flex-wrap:wrap}
+  .benefit{flex:1 1 155px;min-width:145px;text-align:center;background:var(--grey-bg);border-radius:8px;padding:15px 12px}
+  .benefit .ico{color:var(--navy);line-height:0;margin-bottom:7px}
+  .benefit .ico svg{width:25px;height:25px}
+  .benefit b{display:block;font-weight:500;font-size:14px;color:var(--black)}
+  .benefit span{font-size:12.5px;color:var(--grey);font-weight:300}
+
+  /* ---------- Form ---------- */
+  form{margin-top:4px}
+  .field{margin-bottom:18px}
+  .row{display:flex;gap:14px}
+  .row .field{flex:1;min-width:0}
+  legend,label{display:block;font-weight:500;font-size:14px;color:var(--black);margin-bottom:7px}
+  fieldset{border:0}
+  label .opt{font-weight:300;color:var(--grey);font-size:12.5px}
+  .req{color:var(--cyan-dark)}
+  input[type=text],input[type=email],input[type=date],select,textarea{
+    width:100%;font-family:inherit;font-weight:300;font-size:16px;color:var(--black);
+    background:var(--white);border:1.5px solid var(--line);border-radius:8px;padding:12px 13px;transition:.15s}
+  textarea{resize:vertical;min-height:100px;line-height:1.55}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(47,192,204,.30)}
+  select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2364676C' d='M6 8 0 0h12z'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+  select:disabled{background-color:#F4F4F5;color:var(--grey);cursor:not-allowed}
+  .hint{font-size:12.5px;color:var(--grey);margin-top:6px;font-weight:300}
+
+  /* Segmented control — homeowner vs trade */
+  .seg{display:flex;gap:8px}
+  .seg input{position:absolute;opacity:0;width:0;height:0}
+  .seg label{flex:1;margin:0;text-align:center;border:1.5px solid var(--line);border-radius:8px;
+    padding:11px 8px;font-size:14px;font-weight:400;cursor:pointer;transition:.15s;background:var(--white);color:var(--grey)}
+  .seg input:checked + label{border-color:var(--navy);background:var(--navy);color:var(--white);font-weight:500}
+  .seg input:focus-visible + label{box-shadow:0 0 0 3px rgba(47,192,204,.45)}
+
+  /* Warranty callout — driven by product family */
+  .warranty{display:none;align-items:flex-start;gap:11px;background:#F0FAFB;border:1px solid #BFE9ED;
+    border-left:4px solid var(--cyan);border-radius:8px;padding:13px 15px;margin:-4px 0 18px}
+  .warranty.show{display:flex}
+  .warranty .ico{color:var(--cyan-dark);line-height:0;flex:0 0 auto;margin-top:1px}
+  .warranty .ico svg{width:21px;height:21px}
+  .warranty b{display:block;font-weight:500;font-size:14.5px;color:var(--navy)}
+  .warranty span{font-size:13px;color:var(--grey);font-weight:300}
+
+  /* Stars */
+  .stars{display:flex;gap:5px;font-size:36px;line-height:1;user-select:none}
+  .stars .star{cursor:pointer;color:var(--line);transition:transform .08s,color .12s;background:none;border:0;padding:0 2px;font-family:inherit}
+  .stars .star:hover{transform:scale(1.08)}
+  .stars .star.on{color:var(--cyan)}
+  .stars .star:focus-visible{outline:2px solid var(--navy);outline-offset:2px;border-radius:4px}
+  .stars-label{font-size:13.5px;color:var(--grey);margin-top:7px;min-height:20px;font-weight:300}
+
+  /* Photos */
+  .drop{border:2px dashed var(--line);border-radius:8px;padding:22px;text-align:center;cursor:pointer;transition:.15s;background:#FAFAFB;width:100%;font-family:inherit;display:block}
+  .drop:hover,.drop.drag{border-color:var(--cyan);background:#F0FAFB}
+  .drop:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+  .drop .ico{color:var(--navy);line-height:0;margin-bottom:5px}
+  .drop .ico svg{width:30px;height:30px}
+  .drop p{font-size:14px;color:var(--grey);margin-top:4px;font-weight:300}
+  .drop b{color:var(--navy);font-weight:500}
+  .thumbs{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .thumb{position:relative;width:80px;height:80px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .thumb button{position:absolute;top:3px;right:3px;width:21px;height:21px;border:none;border-radius:50%;
+    background:rgba(0,0,0,.72);color:#fff;font-size:13px;line-height:21px;cursor:pointer;padding:0}
+
+  /* Consent */
+  .consent{display:flex;gap:10px;align-items:flex-start;margin-bottom:6px}
+  .consent input{width:18px;height:18px;margin-top:2px;flex:0 0 auto;accent-color:var(--navy)}
+  .consent label{font-weight:300;font-size:13.5px;color:var(--grey);margin:0}
+
+  .err{color:#B00020;font-size:13px;margin-top:6px;display:none;font-weight:300}
+  .field.invalid input,.field.invalid select,.field.invalid textarea{border-color:#B00020}
+  .field.invalid .err{display:block}
+
+  .submit{width:100%;background:var(--black);color:var(--white);border:none;border-radius:8px;
+    font-family:inherit;font-weight:500;font-size:16.5px;padding:16px;cursor:pointer;margin-top:8px;transition:.15s}
+  .submit:hover{background:#1A1A1A}
+  .submit:disabled{opacity:.55;cursor:not-allowed}
+  .formerr{display:none;background:#FDEEF0;border:1px solid #F3C2C9;color:#B00020;border-radius:8px;
+    padding:12px 14px;font-size:13.5px;font-weight:300;margin-top:14px}
+  .formerr.show{display:block}
+  .fineprint{font-size:12px;color:var(--grey);text-align:center;margin-top:14px;line-height:1.55;font-weight:300}
+
+  .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+
+  /* ---------- Success ---------- */
+  .done{display:none;text-align:center;padding:16px 4px 8px}
+  .done .check{width:70px;height:70px;border-radius:50%;background:var(--cyan);color:var(--white);
+    font-size:36px;line-height:70px;margin:0 auto 18px}
+  .done h2{font-size:25px;color:var(--navy);margin-bottom:10px}
+  .done p{color:var(--grey);max-width:440px;margin:0 auto 10px;font-size:15px;font-weight:300}
+  .regid{display:inline-block;margin:16px auto 4px;background:var(--grey-bg);border:1px dashed var(--line);
+    border-radius:8px;padding:12px 20px}
+  .regid small{display:block;font-size:12px;color:var(--grey);font-weight:300;margin-bottom:3px}
+  .regid b{font-size:20px;font-weight:700;color:var(--navy);letter-spacing:.06em}
+  .nextup{margin-top:24px;text-align:left;background:var(--grey-bg);border-radius:8px;padding:18px 18px 16px}
+  .nextup h3{font-size:16px;color:var(--navy);margin-bottom:6px}
+  .nextup p{margin:0 0 12px;font-size:14px;text-align:left;max-width:none}
+  .btn-out{display:block;text-align:center;background:var(--white);border:1.5px solid var(--navy);color:var(--navy);
+    border-radius:8px;padding:12px;font-size:15px;font-weight:500;text-decoration:none;transition:.15s}
+  .btn-out:hover{background:var(--navy);color:var(--white)}
+  .support{margin-top:20px;font-size:13.5px;color:var(--grey);font-weight:300}
+  .support a{color:var(--navy);font-weight:500;text-decoration:none}
+
+  footer{text-align:center;padding:28px 18px 40px;color:var(--grey);font-size:12.5px;font-weight:300}
+  footer img{height:26px;width:auto;display:block;margin:0 auto 10px;opacity:.9}
+  footer a{color:var(--grey);text-decoration:underline}
+
+  @media(max-width:480px){
+    .hero{padding:32px 0 88px}
+    .hero h1{font-size:25px}
+    .row{flex-direction:column;gap:0}
+    .card{padding:24px 18px 28px}
+    /* Keep the three proof points on one line so the form stays above the fold. */
+    .benefits{gap:7px;margin-bottom:24px}
+    .benefit{flex:1 1 0;min-width:0;padding:12px 6px}
+    .benefit .ico svg{width:22px;height:22px}
+    .benefit b{font-size:12.5px;line-height:1.25}
+    .benefit span{font-size:11px;line-height:1.3;display:block;margin-top:2px}
+  }
+</style>
+</head>
+<body>
+
+  <header class="hero">
+    <div class="wrap">
+      <img class="logo" src="/assets/bootz-logo-white.png" alt="Bootz" width="800" height="411" />
+      <span class="pill">Product registration</span>
+      <h1>Register your Bootz product</h1>
+      <p class="lede">Put your warranty on file in about a minute &mdash; then tell us how the install went. Real feedback from the field is how we keep making these better.</p>
+      <p class="since">American-made bathware since 1937</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="card" id="card">
+
+      <div class="benefits" id="benefits">
+        <div class="benefit">
+          <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></div>
+          <b>Warranty on file</b><span>Faster claims later</span>
+        </div>
+        <div class="benefit">
+          <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></svg></div>
+          <b>Rate the install</b><span>It shapes the next one</span>
+        </div>
+        <div class="benefit">
+          <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/></svg></div>
+          <b>About a minute</b><span>Only the essentials</span>
+        </div>
+      </div>
+
+      <form id="regForm" novalidate>
+        <div class="hp" aria-hidden="true"><label>Company<input type="text" name="company" tabindex="-1" autocomplete="off" /></label></div>
+
+        <fieldset class="field">
+          <legend>Who's registering?</legend>
+          <div class="seg">
+            <input type="radio" id="segHome" name="audience" value="Homeowner" checked />
+            <label for="segHome">Homeowner</label>
+            <input type="radio" id="segTrade" name="audience" value="Trade / Pro" />
+            <label for="segTrade">Trade or pro</label>
+          </div>
+          <p class="hint" id="audienceHint">Plumbers, builders and property managers &mdash; switch to &ldquo;Trade or pro&rdquo; so we route you to the right team.</p>
+        </fieldset>
+
+        <div class="row">
+          <div class="field">
+            <label for="fullName">Full name <span class="req">*</span></label>
+            <input type="text" id="fullName" name="fullName" autocomplete="name" required />
+            <div class="err">Please enter your name.</div>
+          </div>
+          <div class="field">
+            <label for="email">Email <span class="req">*</span></label>
+            <input type="email" id="email" name="email" autocomplete="email" inputmode="email" required />
+            <div class="err">Please enter a valid email.</div>
+          </div>
+        </div>
+
+        <div class="field" id="companyField" style="display:none">
+          <label for="companyName">Company <span class="opt">(optional)</span></label>
+          <input type="text" id="companyName" name="companyName" autocomplete="organization" placeholder="e.g. Riverbend Plumbing" />
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="productFamily">What did you install? <span class="req">*</span></label>
+            <select id="productFamily" name="productFamily" required>
+              <option value="" disabled selected>Select&hellip;</option>
+              <optgroup label="Bathtubs">
+                <option>Aloha</option>
+                <option>Aloha Plus</option>
+                <option>Bootzcast</option>
+                <option>Maui</option>
+                <option>Maui Plus</option>
+                <option>Mauicast</option>
+                <option>Mauicast Plus</option>
+                <option>Honolulu</option>
+                <option>Kona</option>
+                <option>Cambridge</option>
+                <option>Americast tub</option>
+                <option>Freedom tub</option>
+                <option>Other bathtub</option>
+              </optgroup>
+              <optgroup label="Shower bases">
+                <option>ShowerCast</option>
+                <option>Americast shower base</option>
+                <option>Other shower base</option>
+              </optgroup>
+              <optgroup label="Wall kits">
+                <option>NexTile</option>
+                <option>NexTile Pro</option>
+                <option>Freedom direct-to-stud walls</option>
+                <option>Passage glue-up walls</option>
+                <option>Aspirations glue-up walls</option>
+                <option>Standard wall kit</option>
+              </optgroup>
+              <optgroup label="Sinks">
+                <option>Azalea</option>
+                <option>Daffodil</option>
+                <option>Daisy</option>
+                <option>Garnet</option>
+                <option>Garnet 2</option>
+                <option>Laurel</option>
+                <option>Orchid</option>
+              </optgroup>
+            </select>
+            <div class="err">Please choose what you installed.</div>
+          </div>
+          <div class="field">
+            <label for="modelNumber">Model number <span class="opt">(on the box label)</span></label>
+            <input type="text" id="modelNumber" name="modelNumber" placeholder="e.g. BZ011-5300" autocapitalize="characters" />
+          </div>
+        </div>
+
+        <div class="warranty" id="warrantyBox" role="status">
+          <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6l7-3z"/></svg></div>
+          <div><b id="warrantyTerm"></b><span id="warrantyNote"></span></div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="purchaseDate">Purchase or install date <span class="opt">(approx.)</span></label>
+            <input type="date" id="purchaseDate" name="purchaseDate" />
+          </div>
+          <div class="field">
+            <label for="purchasedFrom">Where did it come from?</label>
+            <select id="purchasedFrom" name="purchasedFrom">
+              <option value="" disabled selected>Select&hellip;</option>
+              <option>The Home Depot</option>
+              <option>Lowe's</option>
+              <option>Menards</option>
+              <option>Amazon</option>
+              <option>Ferguson</option>
+              <option>Plumbing supply house</option>
+              <option>Builder or contractor supplied it</option>
+              <option>It came with the home or apartment</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+
+        <fieldset class="field" id="ratingField">
+          <legend>How would you rate it? <span class="req">*</span></legend>
+          <div class="stars" id="stars">
+            <button type="button" class="star" data-v="1" aria-label="1 star out of 5">&#9733;</button>
+            <button type="button" class="star" data-v="2" aria-label="2 stars out of 5">&#9733;</button>
+            <button type="button" class="star" data-v="3" aria-label="3 stars out of 5">&#9733;</button>
+            <button type="button" class="star" data-v="4" aria-label="4 stars out of 5">&#9733;</button>
+            <button type="button" class="star" data-v="5" aria-label="5 stars out of 5">&#9733;</button>
+          </div>
+          <div class="stars-label" id="starsLabel" role="status"></div>
+          <input type="hidden" id="rating" name="rating" />
+          <div class="err" id="ratingErr">Please tap a star rating.</div>
+        </fieldset>
+
+        <div class="field">
+          <label for="review">Tell us about it <span class="opt">(optional, but it really helps)</span></label>
+          <textarea id="review" name="review" placeholder="How did it install? How does it look and hold up? A sentence or two is plenty." maxlength="2000"></textarea>
+        </div>
+
+        <div class="field">
+          <label id="photoLabel">Add a photo <span class="opt">(optional &mdash; up to 3)</span></label>
+          <button type="button" class="drop" id="drop" aria-labelledby="photoLabel">
+            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5A1.5 1.5 0 014.5 7h2L8 5h8l1.5 2h2A1.5 1.5 0 0121 8.5V18a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 18z"/><circle cx="12" cy="13" r="3.2"/></svg></span>
+            <p>Tap to add photos, or <b>browse</b><br/>A finished install shot makes your review far more useful.</p>
+          </button>
+          <input type="file" id="fileInput" accept="image/*" multiple style="display:none" />
+          <div class="thumbs" id="thumbs"></div>
+          <div class="hint" id="photoHint" role="status"></div>
+        </div>
+
+        <div class="consent">
+          <input type="checkbox" id="optIn" name="optIn" />
+          <label for="optIn">Email me occasional Bootz product news and care tips. You can unsubscribe any time.</label>
+        </div>
+
+        <button type="submit" class="submit" id="submitBtn">Register my product</button>
+        <div class="formerr" id="formErr"></div>
+        <p class="fineprint">Registering puts your Bootz limited warranty record on file. By submitting a review and photos you give Bootz permission to use them in marketing. We never sell your information.</p>
+      </form>
+
+      <div class="done" id="done">
+        <div class="check" aria-hidden="true">&#10003;</div>
+        <h2>You're registered</h2>
+        <p id="doneMsg">Your warranty record is on file and a confirmation is on its way to your inbox.</p>
+
+        <div class="regid">
+          <small>Your registration number</small>
+          <b id="regIdOut">&mdash;</b>
+        </div>
+
+        <div class="nextup" id="nextUp" style="display:none">
+          <h3>One more small thing?</h3>
+          <p id="nextUpCopy">If you have 30 seconds, posting the same review where you bought it helps the next person choose with confidence.</p>
+          <a class="btn-out" id="reviewLink" href="#" target="_blank" rel="noopener">Leave a review</a>
+        </div>
+
+        <p class="support" id="supportBlock">
+          Need help with this product? Call Bootz support at
+          <a href="tel:18004437269">(800) 443-7269</a>.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <img src="/assets/bootz-logo-black.png" alt="Bootz" width="800" height="411" />
+    <div>&copy; <span id="yr"></span> Bootz Industries, an American Bath Group company. All rights reserved.</div>
+    <div style="margin-top:6px"><a href="https://bootz.com/warranty/" target="_blank" rel="noopener">Full warranty terms</a></div>
+  </footer>
+
+<script>
+(function(){
+  'use strict';
+  document.getElementById('yr').textContent = new Date().getFullYear();
+
+  /* ---- Warranty terms, per bootz.com/warranty ---- */
+  var WARRANTY = {
+    'Aloha':'Limited lifetime warranty','Aloha Plus':'Limited lifetime warranty',
+    'Bootzcast':'Limited lifetime warranty','Maui':'Limited lifetime warranty',
+    'Maui Plus':'Limited lifetime warranty','Mauicast':'Limited lifetime warranty',
+    'Mauicast Plus':'Limited lifetime warranty','Honolulu':'Limited lifetime warranty',
+    'Kona':'Limited lifetime warranty','Cambridge':'Limited lifetime warranty',
+    'Americast tub':'Limited lifetime warranty','Freedom tub':'10-year limited warranty',
+    'ShowerCast':'Limited lifetime warranty','Americast shower base':'Limited lifetime warranty',
+    'NexTile':'15-year limited warranty','NexTile Pro':'15-year limited warranty',
+    'Freedom direct-to-stud walls':'15-year limited warranty',
+    'Passage glue-up walls':'15-year limited warranty',
+    'Aspirations glue-up walls':'15-year limited warranty',
+    'Standard wall kit':'Limited lifetime warranty',
+    'Azalea':'1-year limited warranty','Daffodil':'1-year limited warranty',
+    'Daisy':'1-year limited warranty','Garnet':'1-year limited warranty',
+    'Garnet 2':'1-year limited warranty','Laurel':'1-year limited warranty',
+    'Orchid':'1-year limited warranty'
+  };
+  var family = document.getElementById('productFamily');
+  var wBox = document.getElementById('warrantyBox');
+  var wTerm = document.getElementById('warrantyTerm');
+  var wNote = document.getElementById('warrantyNote');
+  family.addEventListener('change', function(){
+    var term = WARRANTY[family.value];
+    if(term){
+      wTerm.textContent = term;
+      wNote.textContent = 'That’s what ' + family.value + ' carries. Full terms and conditions are on bootz.com.';
+    } else {
+      // "Other" — we can't name a term without knowing the model.
+      wTerm.textContent = 'We’ll match your warranty to the model';
+      wNote.textContent = 'Add the model number above if you have it, and we’ll tie your record to the right product.';
+    }
+    wBox.classList.add('show');
+    family.closest('.field').classList.remove('invalid');
+  });
+
+  /* ---- Homeowner vs trade ---- */
+  var companyField = document.getElementById('companyField');
+  var audienceHint = document.getElementById('audienceHint');
+  [].forEach.call(document.querySelectorAll('input[name=audience]'), function(r){
+    r.addEventListener('change', function(){
+      var trade = document.getElementById('segTrade').checked;
+      companyField.style.display = trade ? 'block' : 'none';
+      audienceHint.textContent = trade
+        ? 'Registering on behalf of a job, a build or a property? This keeps the warranty tied to you.'
+        : 'Plumbers, builders and property managers — switch to “Trade or pro” so we route you to the right team.';
+    });
+  });
+
+  /* ---- Star rating ---- */
+  var rating = 0;
+  var starsWrap = document.getElementById('stars');
+  var starsEls = [].slice.call(starsWrap.querySelectorAll('.star'));
+  var labels = {1:'Not great',2:'Could be better',3:'It’s okay',4:'Really good',5:'Love it'};
+  function paint(n){ starsEls.forEach(function(s){ s.classList.toggle('on', +s.dataset.v <= n); }); }
+  function setRating(n){
+    rating = n;
+    document.getElementById('rating').value = n;
+    document.getElementById('starsLabel').textContent = labels[n];
+    paint(n);
+    document.getElementById('ratingField').classList.remove('invalid');
+  }
+  starsEls.forEach(function(s){
+    s.addEventListener('mouseenter', function(){ paint(+s.dataset.v); });
+    s.addEventListener('focus', function(){ paint(+s.dataset.v); });
+    s.addEventListener('click', function(){ setRating(+s.dataset.v); });
+  });
+  starsWrap.addEventListener('mouseleave', function(){ paint(rating); });
+  starsWrap.addEventListener('blurin', function(){ paint(rating); });
+  starsWrap.addEventListener('focusout', function(){ setTimeout(function(){
+    if(!starsWrap.contains(document.activeElement)) paint(rating);
+  },0); });
+
+  /* ---- Photos ---- */
+  var MAX_PHOTOS = 3, MAX_DIM = 1500, JPEG_Q = 0.82;
+  var photos = [];
+  var drop = document.getElementById('drop');
+  var fileInput = document.getElementById('fileInput');
+  var thumbs = document.getElementById('thumbs');
+  var photoHint = document.getElementById('photoHint');
+
+  drop.addEventListener('click', function(){ fileInput.click(); });
+  ['dragover','dragenter'].forEach(function(e){ drop.addEventListener(e,function(ev){ev.preventDefault();drop.classList.add('drag');}); });
+  ['dragleave','drop'].forEach(function(e){ drop.addEventListener(e,function(ev){ev.preventDefault();drop.classList.remove('drag');}); });
+  drop.addEventListener('drop', function(ev){ handleFiles(ev.dataTransfer.files); });
+  fileInput.addEventListener('change', function(){ handleFiles(fileInput.files); fileInput.value=''; });
+
+  function handleFiles(list){
+    var files = [].slice.call(list).filter(function(f){ return /^image\//.test(f.type); });
+    var slots = MAX_PHOTOS - photos.length;
+    if (slots <= 0){ photoHint.textContent = 'You’ve added the maximum of ' + MAX_PHOTOS + ' photos.'; return; }
+    files.slice(0, slots).forEach(compressAndAdd);
+  }
+  function compressAndAdd(file){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var img = new Image();
+      img.onload = function(){
+        var scale = Math.min(1, MAX_DIM / Math.max(img.width, img.height));
+        var w = Math.round(img.width*scale), h = Math.round(img.height*scale);
+        var c = document.createElement('canvas'); c.width=w; c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        photos.push({ dataUrl:c.toDataURL('image/jpeg', JPEG_Q), name:file.name, type:'image/jpeg' });
+        renderThumbs();
+      };
+      img.onerror = function(){ photoHint.textContent = 'Couldn’t read that image, please try another.'; };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+  function renderThumbs(){
+    thumbs.innerHTML='';
+    photos.forEach(function(p,i){
+      var d=document.createElement('div'); d.className='thumb';
+      var im=document.createElement('img'); im.src=p.dataUrl; im.alt='Photo '+(i+1); d.appendChild(im);
+      var b=document.createElement('button'); b.type='button'; b.innerHTML='&times;'; b.setAttribute('aria-label','Remove photo '+(i+1));
+      b.onclick=function(){ photos.splice(i,1); renderThumbs(); };
+      d.appendChild(b); thumbs.appendChild(d);
+    });
+    photoHint.textContent = photos.length ? photos.length + ' of ' + MAX_PHOTOS + ' added' : '';
+  }
+
+  /* ---- Where to send the public review ---- */
+  var REVIEW_LINKS = {
+    'The Home Depot':{url:'https://www.homedepot.com/b/Bath-Bathtubs/Bootz-Industries/N-5yc1vZbzb7Z9t', name:'Home Depot'},
+    "Lowe's":{url:'https://www.lowes.com/search?searchTerm=bootz', name:"Lowe's"},
+    'Menards':{url:'https://www.menards.com/main/search.html?search=bootz', name:'Menards'},
+    'Amazon':{url:'https://www.amazon.com/s?k=bootz+industries', name:'Amazon'}
+  };
+
+  /* ---- Submit ---- */
+  var form = document.getElementById('regForm');
+  var btn = document.getElementById('submitBtn');
+  var formErr = document.getElementById('formErr');
+  function setInvalid(el, bad){ el.closest('.field').classList.toggle('invalid', bad); }
+  function emailOk(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+  form.addEventListener('submit', function(ev){
+    ev.preventDefault();
+    formErr.classList.remove('show');
+    var fullName=form.fullName, email=form.email, ok=true;
+    if(!fullName.value.trim()){ setInvalid(fullName,true); ok=false; } else setInvalid(fullName,false);
+    if(!emailOk(email.value.trim())){ setInvalid(email,true); ok=false; } else setInvalid(email,false);
+    if(!family.value){ setInvalid(family,true); ok=false; } else setInvalid(family,false);
+    if(!rating){ document.getElementById('ratingField').classList.add('invalid'); ok=false; }
+    if(!ok){ var bad=form.querySelector('.invalid'); if(bad) bad.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+    if(form.company.value){ return; }   // honeypot
+
+    var audience = document.querySelector('input[name=audience]:checked').value;
+    var payload = {
+      brand: 'Bootz',
+      audience: audience,
+      companyName: audience === 'Trade / Pro' ? form.companyName.value.trim() : '',
+      fullName: fullName.value.trim(),
+      email: email.value.trim(),
+      productType: family.value,
+      warrantyTerm: WARRANTY[family.value] || '',
+      modelNumber: form.modelNumber.value.trim(),
+      purchaseDate: form.purchaseDate.value,
+      purchasedFrom: form.purchasedFrom.value,
+      rating: rating,
+      review: form.review.value.trim(),
+      optIn: form.optIn.checked,
+      photos: photos.map(function(p){ return {dataUrl:p.dataUrl, name:p.name, type:p.type}; }),
+      pageUrl: location.href,
+      submittedAt: new Date().toISOString()
+    };
+
+    btn.disabled=true; btn.textContent='Registering…';
+    fetch('/api/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) })
+      .then(function(r){ return r.json().catch(function(){ return {ok:r.ok}; }); })
+      .then(function(res){
+        if(!res || !res.ok) throw new Error((res && res.error) || 'failed');
+
+        document.getElementById('regIdOut').textContent = res.registrationId || '—';
+        document.getElementById('doneMsg').textContent = res.emailed
+          ? 'Your warranty record is on file. A confirmation is on its way to ' + payload.email + '.'
+          : 'Your warranty record is on file. Hang on to the number below — it’s all we need if you ever call in.';
+
+        // Everyone gets the public-review hand-off, whatever they rated it.
+        var link = REVIEW_LINKS[payload.purchasedFrom];
+        if(link){
+          document.getElementById('reviewLink').href = link.url;
+          document.getElementById('reviewLink').textContent = 'Review it on ' + link.name;
+          document.getElementById('nextUp').style.display = 'block';
+        }
+        if(rating <= 3){
+          var support = document.getElementById('supportBlock');
+          support.innerHTML =
+            'Sorry this one didn’t land the way it should. Our team has your note and will look at it — ' +
+            'if you’d rather talk it through now, call <a href="tel:18004437269">(800) 443-7269</a>.';
+          // Make it right first, then still offer the public review — we don't gate
+          // the invitation on how someone rated us.
+          support.parentNode.insertBefore(support, document.getElementById('nextUp'));
+          support.style.marginBottom = '4px';
+        }
+
+        document.getElementById('regForm').style.display='none';
+        document.getElementById('benefits').style.display='none';
+        document.getElementById('done').style.display='block';
+        document.getElementById('card').scrollIntoView({behavior:'smooth',block:'start'});
+      })
+      .catch(function(){
+        btn.disabled=false; btn.textContent='Register my product';
+        formErr.textContent = 'Something went wrong saving your registration. Please try again in a moment — or call (800) 443-7269 and we’ll do it for you.';
+        formErr.classList.add('show');
+      });
+  });
+})();
+</script>
+</body>
+</html>
