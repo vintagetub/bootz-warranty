@@ -562,34 +562,61 @@
     'Amazon':{url:'https://www.amazon.com/s?k=bootz+industries', name:'Amazon'}
   };
 
-  /* ---- Bazaarvoice site-hosted Product Picker -------------------------------
+  /* ---- Bazaarvoice public review hand-off -----------------------------------
      Lets the customer post a real public review from this page instead of being
-     sent off to a retailer. Off until `clientName` is filled in — get the value
-     from the Bazaarvoice Portal (Site Manager), lowercase. Until then the page
-     falls back to the retailer links above, exactly as it does today.
+     sent off to a retailer. Off entirely if `clientName` is blank, in which case
+     the page falls back to the retailer links above, exactly as it did before.
+
+     The customer already told us what they installed in the product dropdown, so
+     they should never have to pick a product again. That gives three tiers, best
+     first, each falling through to the next if it doesn't render:
+
+       1. BV's review submission form, opened already attached to the product
+          they registered. One selection, no product list. Needs an ExternalId in
+          BV_PRODUCT below.
+       2. BV's Product Picker, scoped to that product's family (or the root
+          category). Costs one extra tap to confirm the product.
+       3. The retailer link, i.e. the original behaviour.
 
      `siteId` is the deployment zone ("main_site" is the default). Point
      `environment` at 'staging' to test against the BV staging catalog first.
 
-     Two prerequisites live outside this file:
-       1. Product Picker must be switched on in the BV Style Editor (V2). If the
-          option isn't there, BV Support has to enable it.
-       2. The BV product feed must map products to categories / product families,
-          or the picker renders an empty list.
+     Prerequisites that live outside this file:
+       1. `submissionShow` is the one value here NOT taken from the Product Picker
+          doc — confirm the site-hosted submission container's data-bv-show value
+          with your BV rep. If it's wrong, tier 1 simply never renders and tier 2
+          takes over, so a bad guess costs a few seconds, not the feature.
+       2. Product Picker switched on in the BV Style Editor (V2). If the option
+          isn't there, BV Support has to enable it.
+       3. A BV product feed with products mapped to categories / product
+          families, or the picker renders an empty list.
      ------------------------------------------------------------------------- */
   var BV = {
-    clientName:  'bootz',                   // blank disables the picker
+    clientName:  'bootz',                   // blank disables the whole hand-off
     siteId:      'main_site',
     environment: 'production',              // 'staging' while testing
     locale:      'en_US',
     campaignId:  'bootz_qr_registration',   // segments these reviews in BV reports
-    categoryId:  ''                         // optional; ignored when a family matches below
+    categoryId:  '',                        // optional; ignored when a family matches
+    submissionShow: 'review_submission'     // ← confirm with BV; see note 1 above
   };
 
-  /* Our product families → the ExternalId of any product in the matching BV
-     product family, so the picker opens already scoped to what they registered
-     instead of the whole catalog. Fill these from the BV product catalog; any
-     left blank fall back to the root category, which still works. */
+  /* Our product names → the ExternalId of that exact product in the BV catalog,
+     so the review form opens already attached to it and the customer never picks
+     a product twice. This is the map that makes tier 1 work — fill it from the BV
+     product catalog. Anything left blank falls through to tier 2. */
+  var BV_PRODUCT = {
+    'Aloha':'', 'Aloha Plus':'', 'Bootzcast':'', 'Maui':'', 'Maui Plus':'',
+    'Mauicast':'', 'Mauicast Plus':'', 'Honolulu':'', 'Kona':'', 'Cambridge':'',
+    'Americast tub':'', 'Freedom tub':'', 'ShowerCast':'', 'Americast shower base':'',
+    'NexTile':'', 'NexTile Pro':'', 'Freedom direct-to-stud walls':'',
+    'Passage glue-up walls':'', 'Aspirations glue-up walls':'', 'Standard wall kit':'',
+    'Azalea':'', 'Daffodil':'', 'Daisy':'', 'Garnet':'', 'Garnet 2':'',
+    'Laurel':'', 'Orchid':''
+  };
+
+  /* Tier 2 only: the ExternalId of any product in the matching BV product
+     family, used to scope the picker when we have no exact product ID above. */
   var BV_FAMILY = {
     'Aloha':'', 'Aloha Plus':'', 'Bootzcast':'', 'Maui':'', 'Maui Plus':'',
     'Mauicast':'', 'Mauicast Plus':'', 'Honolulu':'', 'Kona':'', 'Cambridge':'',
@@ -637,24 +664,43 @@
     }
   }
 
-  /* Injects the picker on demand rather than on page load: this page is opened
-     from a QR code on packaging, so we don't pull in bv.js — or its cookies —
-     for the majority who never get as far as a public review. */
-  function showBvPicker(productFamily){
-    var box = document.getElementById('bvPicker');
-    if(box.firstChild) return;
+  /* Which tier we're on: 0 = nothing tried, 1 = product-scoped submission form,
+     2 = Product Picker. Used to decide what to try next when one doesn't render. */
+  var bvTier = 0;
 
+  /* True when we can open a review form already attached to their product, so the
+     copy can promise that rather than telling them to pick a product. */
+  function bvHasProduct(productName){
+    return !!(BV_PRODUCT[productName] && BV.submissionShow);
+  }
+
+  /* Injects on demand rather than on page load: this page is opened from a QR
+     code on packaging, so we don't pull in bv.js — or its cookies — for the
+     majority who never get as far as a public review. */
+  function openBvReview(productName){
+    var box = document.getElementById('bvPicker');
+    box.innerHTML = '';                 // clear a previous tier's attempt
     var el = document.createElement('div');
-    el.setAttribute('data-bv-show', 'product_picker');
-    el.setAttribute('data-bv-inline', 'true');   // in-page, not a lightbox — kinder on a phone
+
+    if(bvTier === 0 && bvHasProduct(productName)){
+      // Tier 1 — straight to the review form for the product they registered.
+      // Deliberately minimal: only the two attributes we're confident about.
+      bvTier = 1;
+      el.setAttribute('data-bv-show', BV.submissionShow);
+      el.setAttribute('data-bv-product-id', BV_PRODUCT[productName]);
+    } else {
+      // Tier 2 — the documented Product Picker, scoped as tightly as we can.
+      bvTier = 2;
+      el.setAttribute('data-bv-show', 'product_picker');
+      el.setAttribute('data-bv-inline', 'true');   // in-page, not a lightbox — kinder on a phone
+      // Never set both family and category — BV throws a console error if you do.
+      var familyId = BV_FAMILY[productName];
+      if(familyId)           el.setAttribute('data-bv-family-product-id', familyId);
+      else if(BV.categoryId) el.setAttribute('data-bv-category-id', BV.categoryId);
+    }
     if(BV.campaignId) el.setAttribute('data-bv-campaign-id', BV.campaignId);
 
-    // Never set both family and category — BV throws a console error if you do.
-    var familyId = BV_FAMILY[productFamily];
-    if(familyId)          el.setAttribute('data-bv-family-product-id', familyId);
-    else if(BV.categoryId) el.setAttribute('data-bv-category-id', BV.categoryId);
-
-    // Kept as a sibling of the picker div, not inside it, so it doesn't read as
+    // Kept as a sibling of the BV element, not inside it, so it doesn't read as
     // rendered BV content to the no-show check below.
     var wait = document.createElement('p');
     wait.className = 'bvwait';
@@ -663,19 +709,22 @@
     box.appendChild(wait);
     box.appendChild(el);
     box.style.display = 'block';
-    loadBvJs(bvFallback);
+    loadBvJs(bvFallback);               // script itself failed → straight to tier 3
 
-    // BV renders into our div. Drop the placeholder once it does; if nothing has
-    // appeared within 8s, treat it as a no-show and hand back to the retailer.
+    /* BV renders into our element. Drop the placeholder once it does; if nothing
+       appears, fall through to the next tier. Tier 1 gets a shorter leash than
+       tier 2 because it's the one relying on an unconfirmed attribute value. */
+    var limit = bvTier === 1 ? 5000 : 8000;
     var waited = 0;
     var poll = setInterval(function(){
       waited += 400;
       if(el.children.length || el.textContent.trim()){
         clearInterval(poll);
         if(wait.parentNode) wait.parentNode.removeChild(wait);
-      } else if(waited >= 8000){
+      } else if(waited >= limit){
         clearInterval(poll);
-        bvFallback();
+        if(bvTier === 1) openBvReview(productName);   // try the picker instead
+        else bvFallback();
       }
     }, 400);
   }
@@ -753,9 +802,11 @@
           // On-site Product Picker is the primary route; the retailer link stays
           // as a secondary option, since syndication out to a given retailer
           // depends on the agreements BV has in place for them.
-          document.getElementById('nextUpCopy').textContent =
-            'If you have a minute, post it publicly — pick your product below and your review ' +
-            'helps the next person choose with confidence.';
+          document.getElementById('nextUpCopy').textContent = bvHasProduct(payload.productType)
+            ? 'If you have a minute, post it publicly — we’ll carry over the ' +
+              payload.productType + ' you just registered so you only need your review.'
+            : 'If you have a minute, post it publicly — pick your product below and your ' +
+              'review helps the next person choose with confidence.';
           bvStart.style.display = 'block';
           retailerLink.style.display = 'none';
 
@@ -771,7 +822,7 @@
           }
           bvStart.addEventListener('click', function(){
             bvStart.style.display = 'none';
-            showBvPicker(payload.productType);
+            openBvReview(payload.productType);
             document.getElementById('bvPicker').scrollIntoView({behavior:'smooth', block:'start'});
           });
           document.getElementById('nextUp').style.display = 'block';

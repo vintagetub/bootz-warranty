@@ -46,10 +46,12 @@ faithful fallback everywhere else.
 
 ## What this does that the DreamLine / American Standard version didn't
 
-- **Real product picker** — the actual Bootz line (Aloha, Bootzcast, Maui,
+- **Real product dropdown** — the actual Bootz line (Aloha, Bootzcast, Maui,
   Mauicast, Kona, Honolulu, Cambridge, Freedom, ShowerCast, NexTile, the
   glue-up wall systems, and all seven sinks), grouped by category. No more
-  free-text product names to clean up later.
+  free-text product names to clean up later. *(Called a "product picker" in
+  earlier drafts — renamed to keep it distinct from Bazaarvoice's Product
+  Picker, which is a different control doing a different job. See below.)*
 - **Live warranty term** — picking a product shows what it actually carries
   (lifetime / 15-year / 10-year / 1-year), sourced from
   [bootz.com/warranty](https://bootz.com/warranty/). It also lands in the sheet
@@ -74,6 +76,18 @@ faithful fallback everywhere else.
   instead of chasing the customer to a retailer. Built but off; see below.
 
 ## Bazaarvoice Product Picker (site-hosted)
+
+**Two different controls, confusingly similar names.** Don't mix them up:
+
+| | What it selects | Where it lives | Fails how |
+|---|---|---|---|
+| **Product dropdown** (`#productFamily`) | The Bootz product being registered — drives the warranty term and the sheet | On the form, before submit | Can't; it's native HTML with no dependencies |
+| **BV Product Picker** | A product in *Bazaarvoice's* catalog, so a review can attach to it | Confirmation screen, after submit | Falls back to the retailer link |
+
+They can't be collapsed into one control as things stand — the dropdown has to
+keep working for every Bootz product whether or not it exists in the BV feed,
+because warranty registration is this page's primary job and can't be made to
+depend on a third party's catalog or uptime.
 
 **Live**, pointed at the `bootz` production deployment. The config block is near
 the top of the `<script>` in `index.html`:
@@ -113,6 +127,31 @@ injects `<div data-bv-show="product_picker">` and appends `bv.js` on click.
 - Never both `data-bv-family-product-id` and `data-bv-category-id` — BV throws a
   console error if you set both.
 
+### One product selection, not two
+
+The customer already told us what they installed in the product dropdown, so they
+should never pick a product again. Three tiers, best first, each falling through
+to the next only if it doesn't render:
+
+| Tier | What opens | Needs | Customer taps |
+|---|---|---|---|
+| 1 | BV review form, already attached to their product | an ExternalId in `BV_PRODUCT` | rating + review only |
+| 2 | Product Picker, scoped to that product's family | an ExternalId in `BV_FAMILY` | one tap to confirm the product |
+| 3 | Retailer link (original behaviour) | nothing | leaves the site |
+
+**`BV.submissionShow` is the one unverified value in this file.** Every other
+attribute comes from the Product Picker doc; the site-hosted submission
+container's `data-bv-show` value does not appear there, and all four BV
+documentation domains are blocked from the dev sandbox, so `'review_submission'`
+is an educated guess. **Confirm it with your BV rep.** If it's wrong, tier 1
+simply never paints and tier 2 takes over after 5 seconds — a bad guess costs a
+few seconds, not the feature.
+
+`BV_PRODUCT` is empty today, so **tier 1 is dormant and behaviour is identical to
+tier 2 until you fill it in**. That makes this safe to ship before the ExternalIds
+are known. Note the two maps hold different things: `BV_PRODUCT` wants the exact
+product's ExternalId, `BV_FAMILY` wants any product in the right family.
+
 **It degrades instead of dead-ending.** If `bv.js` fails to load, or loads but
 renders nothing within 8 seconds, the page hides the empty picker and restores
 the retailer link with its original wording. If there's no retailer to fall back
@@ -136,12 +175,19 @@ lists products rather than falling back. Setting `environment: 'staging'` runs
 the same check against the BV staging catalog first.
 
 **Known friction:** BV's submission form can't be pre-filled from the page, so a
-customer who already typed a review here has to retype it. The page softens this
-by showing their text back with a "Copy it" button, but it is still two forms.
-The only real fix is submitting server-side through the BV **Conversations API**
-instead of the picker — a different integration needing an API key, and it gives
-up the picker's product-selection UI. Worth costing out if the retype turns out
-to hurt completion.
+customer who already typed a review here has to retype it. Tier 1 removes the
+product re-selection, but not the retyping — the page softens that by showing
+their text back with a "Copy it" button. The only real fix is submitting
+server-side through the BV **Conversations API**, which needs an API key and
+skips BV's form entirely. Worth costing out if the retype hurts completion.
+
+**Why the dropdown can't just *be* the BV picker.** The Product Picker doc defines
+no event, callback, or getter that hands the selected product back to the host
+page — it's a closed flow from selection into BV's own form. So it can't act as
+the form's product field. Even if it could, the dropdown has to keep working for
+every Bootz product whether or not it's in the BV feed, and warranty registration
+can't be made to depend on a third party's catalog or uptime. Tier 1 gets the same
+outcome the right way round: our dropdown drives BV, not the reverse.
 
 **Not review gating.** The picker is offered to everyone regardless of rating,
 same as the retailer link it replaces. On a low rating the "let us make it right"
