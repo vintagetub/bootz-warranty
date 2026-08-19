@@ -177,6 +177,7 @@
 
   /* Bazaarvoice injects its own styles; this just gives the picker room to breathe */
   #bvPicker{margin-top:14px}
+  .bvwait{margin:0!important;padding:14px 0;font-size:13.5px;color:var(--grey);text-align:center!important}
 
   .support{margin-top:20px;font-size:13.5px;color:var(--grey);font-weight:300}
   .support a{color:var(--navy);font-weight:500;text-decoration:none}
@@ -577,7 +578,7 @@
           or the picker renders an empty list.
      ------------------------------------------------------------------------- */
   var BV = {
-    clientName:  '',                        // e.g. 'bootz' — blank disables the picker
+    clientName:  'bootz',                   // blank disables the picker
     siteId:      'main_site',
     environment: 'production',              // 'staging' while testing
     locale:      'en_US',
@@ -601,15 +602,39 @@
 
   var bvEnabled = !!BV.clientName;
   var bvScriptAdded = false;
+  var bvRetailer = null;        // set on submit, for the fallback below
+  var bvFellBack = false;
 
-  function loadBvJs(){
+  function loadBvJs(onFail){
     if(bvScriptAdded) return;
     bvScriptAdded = true;
     var s = document.createElement('script');
     s.async = true;
+    s.onerror = onFail;
     s.src = 'https://apps.bazaarvoice.com/deployments/' + BV.clientName + '/' + BV.siteId +
             '/' + BV.environment + '/' + BV.locale + '/bv.js';
     document.head.appendChild(s);
+  }
+
+  /* If Bazaarvoice never renders — bv.js blocked, Product Picker not enabled in
+     the Style Editor, no category/family mappings in the feed — don't leave the
+     customer staring at an empty box. Put the retailer hand-off back. */
+  function bvFallback(){
+    if(bvFellBack) return;
+    bvFellBack = true;
+    document.getElementById('bvPicker').style.display = 'none';
+    document.getElementById('alsoLink').style.display = 'none';
+    if(bvRetailer){
+      var a = document.getElementById('reviewLink');
+      a.href = bvRetailer.url;
+      a.textContent = 'Review it on ' + bvRetailer.name;
+      a.style.display = 'block';
+      document.getElementById('nextUpCopy').textContent =
+        'If you have 30 seconds, posting the same review where you bought it helps ' +
+        'the next person choose with confidence.';
+    } else {
+      document.getElementById('nextUp').style.display = 'none';
+    }
   }
 
   /* Injects the picker on demand rather than on page load: this page is opened
@@ -629,9 +654,30 @@
     if(familyId)          el.setAttribute('data-bv-family-product-id', familyId);
     else if(BV.categoryId) el.setAttribute('data-bv-category-id', BV.categoryId);
 
+    // Kept as a sibling of the picker div, not inside it, so it doesn't read as
+    // rendered BV content to the no-show check below.
+    var wait = document.createElement('p');
+    wait.className = 'bvwait';
+    wait.textContent = 'Loading the review form…';
+
+    box.appendChild(wait);
     box.appendChild(el);
     box.style.display = 'block';
-    loadBvJs();
+    loadBvJs(bvFallback);
+
+    // BV renders into our div. Drop the placeholder once it does; if nothing has
+    // appeared within 8s, treat it as a no-show and hand back to the retailer.
+    var waited = 0;
+    var poll = setInterval(function(){
+      waited += 400;
+      if(el.children.length || el.textContent.trim()){
+        clearInterval(poll);
+        if(wait.parentNode) wait.parentNode.removeChild(wait);
+      } else if(waited >= 8000){
+        clearInterval(poll);
+        bvFallback();
+      }
+    }, 400);
   }
 
   document.getElementById('copyReview').addEventListener('click', function(){
@@ -701,6 +747,7 @@
         var link = REVIEW_LINKS[payload.purchasedFrom];
         var retailerLink = document.getElementById('reviewLink');
         var bvStart = document.getElementById('bvStart');
+        bvRetailer = link || null;
 
         if(bvEnabled){
           // On-site Product Picker is the primary route; the retailer link stays

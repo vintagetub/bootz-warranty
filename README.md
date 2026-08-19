@@ -75,25 +75,24 @@ faithful fallback everywhere else.
 
 ## Bazaarvoice Product Picker (site-hosted)
 
-Built and wired, **switched off** until someone fills in two values from the
-Bazaarvoice Portal. The config block is near the top of the `<script>` in
-`index.html`:
+**Live**, pointed at the `bootz` production deployment. The config block is near
+the top of the `<script>` in `index.html`:
 
 ```js
 var BV = {
-  clientName:  '',                      // ← the blocker. Lowercase client name from BV
-  siteId:      'main_site',             // ← confirm the deployment zone in Site Manager
-  environment: 'production',            // 'staging' to test first
+  clientName:  'bootz',                 // blank disables the picker
+  siteId:      'main_site',             // deployment zone
+  environment: 'production',            // 'staging' to test against the BV staging catalog
   locale:      'en_US',
   campaignId:  'bootz_qr_registration', // segments these reviews in BV reports
   categoryId:  ''                       // optional; ignored when a family matches
 };
 ```
 
-While `clientName` is blank the confirmation screen behaves exactly as it does
-today — the retailer hand-off (Home Depot / Lowe's / Menards / Amazon). Set it
-and the on-site picker becomes the primary call to action, with the retailer
-link kept as a secondary line underneath.
+The on-site picker is the primary call to action on the confirmation screen, with
+the retailer link (Home Depot / Lowe's / Menards / Amazon) kept as a secondary
+line underneath. Blanking `clientName` reverts the page to the retailer-only
+hand-off — that's the kill switch if anything goes wrong.
 
 **How it behaves.** `bv.js` is *not* loaded on page load. This page is opened
 from a QR code on a carton, and most people register and leave; pulling in
@@ -114,19 +113,27 @@ injects `<div data-bv-show="product_picker">` and appends `bv.js` on click.
 - Never both `data-bv-family-product-id` and `data-bv-category-id` — BV throws a
   console error if you set both.
 
-**Three prerequisites live outside this repo:**
+**It degrades instead of dead-ending.** If `bv.js` fails to load, or loads but
+renders nothing within 8 seconds, the page hides the empty picker and restores
+the retailer link with its original wording. If there's no retailer to fall back
+to, the whole block is hidden and the support number stays. This matters because
+the two remaining prerequisites below are both invisible from here — if either
+isn't in place, customers get the old behaviour rather than a broken box.
 
-1. A Bazaarvoice Ratings & Reviews account with a deployment zone, which is where
-   `clientName` and `siteId` come from. Unverified — outbound access to
-   `apps.bazaarvoice.com` and `bootz.com` is blocked from the dev sandbox, so
-   whether Bootz has its own BV instance (as opposed to reviews reaching Home
-   Depot through the retailer's own BV) needs a look at the Portal.
-2. Product Picker enabled in the BV **Style Editor**. If the option isn't there,
+**Two prerequisites live outside this repo and are unverified:**
+
+1. Product Picker enabled in the BV **Style Editor**. If the option isn't there,
    BV Support has to turn it on.
-3. A BV **product feed** with products mapped to categories and product
+2. A BV **product feed** with products mapped to categories and product
    families. Without those mappings the picker renders an empty list — this is
    the step most likely to need real work, since it means the Bootz catalog has
    to exist in BV with the same families as `BV_FAMILY`.
+
+Neither could be checked from the dev sandbox (outbound access to
+`apps.bazaarvoice.com` is blocked), so **the first real test is the deployed
+page**: register a product, tap "Write a public review", and confirm the picker
+lists products rather than falling back. Setting `environment: 'staging'` runs
+the same check against the BV staging catalog first.
 
 **Known friction:** BV's submission form can't be pre-filled from the page, so a
 customer who already typed a review here has to retype it. The page softens this
