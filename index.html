@@ -104,28 +104,6 @@
   .warranty b{display:block;font-weight:500;font-size:14.5px;color:var(--navy)}
   .warranty span{font-size:13px;color:var(--grey);font-weight:300}
 
-  /* Stars */
-  .stars{display:flex;gap:5px;font-size:36px;line-height:1;user-select:none}
-  .stars .star{cursor:pointer;color:var(--line);transition:transform .08s,color .12s;background:none;border:0;padding:0 2px;font-family:inherit}
-  .stars .star:hover{transform:scale(1.08)}
-  .stars .star.on{color:var(--cyan)}
-  .stars .star:focus-visible{outline:2px solid var(--navy);outline-offset:2px;border-radius:4px}
-  .stars-label{font-size:13.5px;color:var(--grey);margin-top:7px;min-height:20px;font-weight:300}
-
-  /* Photos */
-  .drop{border:2px dashed var(--line);border-radius:8px;padding:22px;text-align:center;cursor:pointer;transition:.15s;background:#FAFAFB;width:100%;font-family:inherit;display:block}
-  .drop:hover,.drop.drag{border-color:var(--cyan);background:#F0FAFB}
-  .drop:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
-  .drop .ico{color:var(--navy);line-height:0;margin-bottom:5px}
-  .drop .ico svg{width:30px;height:30px}
-  .drop p{font-size:14px;color:var(--grey);margin-top:4px;font-weight:300}
-  .drop b{color:var(--navy);font-weight:500}
-  .thumbs{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
-  .thumb{position:relative;width:80px;height:80px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
-  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
-  .thumb button{position:absolute;top:3px;right:3px;width:21px;height:21px;border:none;border-radius:50%;
-    background:rgba(0,0,0,.72);color:#fff;font-size:13px;line-height:21px;cursor:pointer;padding:0}
-
   /* Consent */
   .consent{display:flex;gap:10px;align-items:flex-start;margin-bottom:6px}
   .consent input{width:18px;height:18px;margin-top:2px;flex:0 0 auto;accent-color:var(--navy)}
@@ -146,6 +124,19 @@
 
   .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 
+  /* ---------- Review section (Bazaarvoice) ----------
+     Reads as a continuation of the form, but is a sibling of it — Bazaarvoice
+     renders its own <form> and nested forms are invalid HTML. The rule above it
+     does the work of making the seam look intentional. */
+  .review-block{border-top:1px solid var(--line);margin-top:26px;padding-top:22px}
+  .review-block h3{font-size:16.5px;color:var(--navy);margin-bottom:5px}
+  .review-block h3 .opt{font-weight:300;font-size:13px;color:var(--grey);letter-spacing:0}
+  .review-lede{font-size:14px;color:var(--grey);font-weight:300;line-height:1.55;margin-bottom:4px}
+  .review-skip{font-size:12.5px;color:var(--grey);font-weight:300;margin-top:10px;opacity:.85}
+  /* Bazaarvoice brings its own styles; this only reserves room */
+  #bvPicker{margin-top:14px}
+  .bvwait{padding:14px 0;font-size:13.5px;color:var(--grey);text-align:center}
+
   /* ---------- Success ---------- */
   .done{display:none;text-align:center;padding:16px 4px 8px}
   .done .check{width:70px;height:70px;border-radius:50%;background:var(--cyan);color:var(--white);
@@ -156,29 +147,6 @@
     border-radius:8px;padding:12px 20px}
   .regid small{display:block;font-size:12px;color:var(--grey);font-weight:300;margin-bottom:3px}
   .regid b{font-size:20px;font-weight:700;color:var(--navy);letter-spacing:.06em}
-  .nextup{margin-top:24px;text-align:left;background:var(--grey-bg);border-radius:8px;padding:18px 18px 16px}
-  .nextup h3{font-size:16px;color:var(--navy);margin-bottom:6px}
-  .nextup p{margin:0 0 12px;font-size:14px;text-align:left;max-width:none}
-  .btn-out{display:block;width:100%;text-align:center;background:var(--white);border:1.5px solid var(--navy);color:var(--navy);
-    border-radius:8px;padding:12px;font-size:15px;font-weight:500;text-decoration:none;transition:.15s;
-    font-family:inherit;cursor:pointer}
-  .btn-out:hover{background:var(--navy);color:var(--white)}
-  .alsolink{margin:10px 0 0!important;font-size:13px;color:var(--grey);text-align:center!important}
-  .alsolink a{color:var(--navy);font-weight:500}
-
-  /* The customer's own review text, ready to paste into the Bazaarvoice form */
-  .yourwords{background:var(--white);border:1px solid var(--line);border-radius:8px;
-    padding:11px 12px 12px;margin-bottom:12px}
-  .yourwords small{display:block;font-size:11.5px;color:var(--grey);font-weight:300;margin-bottom:4px}
-  .yourwords p{margin:0 0 9px;font-size:13.5px;color:var(--black);line-height:1.5;
-    max-height:96px;overflow:auto}
-  .yourwords button{background:none;border:0;padding:0;font-family:inherit;font-size:13px;font-weight:500;
-    color:var(--cyan-dark);cursor:pointer;text-decoration:underline}
-
-  /* Bazaarvoice injects its own styles; this just gives the picker room to breathe */
-  #bvPicker{margin-top:14px}
-  .bvwait{margin:0!important;padding:14px 0;font-size:13.5px;color:var(--grey);text-align:center!important}
-
   .support{margin-top:20px;font-size:13.5px;color:var(--grey);font-weight:300}
   .support a{color:var(--navy);font-weight:500;text-decoration:none}
 
@@ -340,36 +308,6 @@
           </div>
         </div>
 
-        <fieldset class="field" id="ratingField">
-          <legend>How would you rate it? <span class="req">*</span></legend>
-          <div class="stars" id="stars">
-            <button type="button" class="star" data-v="1" aria-label="1 star out of 5">&#9733;</button>
-            <button type="button" class="star" data-v="2" aria-label="2 stars out of 5">&#9733;</button>
-            <button type="button" class="star" data-v="3" aria-label="3 stars out of 5">&#9733;</button>
-            <button type="button" class="star" data-v="4" aria-label="4 stars out of 5">&#9733;</button>
-            <button type="button" class="star" data-v="5" aria-label="5 stars out of 5">&#9733;</button>
-          </div>
-          <div class="stars-label" id="starsLabel" role="status"></div>
-          <input type="hidden" id="rating" name="rating" />
-          <div class="err" id="ratingErr">Please tap a star rating.</div>
-        </fieldset>
-
-        <div class="field">
-          <label for="review">Tell us about it <span class="opt">(optional, but it really helps)</span></label>
-          <textarea id="review" name="review" placeholder="How did it install? How does it look and hold up? A sentence or two is plenty." maxlength="2000"></textarea>
-        </div>
-
-        <div class="field">
-          <label id="photoLabel">Add a photo <span class="opt">(optional &mdash; up to 3)</span></label>
-          <button type="button" class="drop" id="drop" aria-labelledby="photoLabel">
-            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5A1.5 1.5 0 014.5 7h2L8 5h8l1.5 2h2A1.5 1.5 0 0121 8.5V18a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 18z"/><circle cx="12" cy="13" r="3.2"/></svg></span>
-            <p>Tap to add photos, or <b>browse</b><br/>A finished install shot makes your review far more useful.</p>
-          </button>
-          <input type="file" id="fileInput" accept="image/*" multiple style="display:none" />
-          <div class="thumbs" id="thumbs"></div>
-          <div class="hint" id="photoHint" role="status"></div>
-        </div>
-
         <div class="consent">
           <input type="checkbox" id="optIn" name="optIn" />
           <label for="optIn">Email me occasional Bootz product news and care tips. You can unsubscribe any time.</label>
@@ -377,8 +315,18 @@
 
         <button type="submit" class="submit" id="submitBtn">Register my product</button>
         <div class="formerr" id="formErr"></div>
-        <p class="fineprint">Registering puts your Bootz limited warranty record on file. By submitting a review and photos you give Bootz permission to use them in marketing. We never sell your information.</p>
+        <p class="fineprint">Registering puts your Bootz limited warranty record on file. We never sell your information.</p>
       </form>
+
+      <!-- Review section. Sits outside the <form> on purpose: Bazaarvoice renders
+           its own <form>, and nesting one form inside another is invalid HTML that
+           browsers silently break. Styled to read as one continuous form. -->
+      <section class="review-block" id="reviewBlock" aria-labelledby="reviewHead">
+        <h3 id="reviewHead">Rate the install <span class="opt">(optional)</span></h3>
+        <p class="review-lede" id="reviewLede">Pick what you installed above and you can leave a public review right here &mdash; it&rsquo;s the single most useful thing for the next person choosing a tub.</p>
+        <div id="bvPicker" style="display:none"></div>
+        <p class="review-skip" id="reviewSkip">Not now? Just register above &mdash; your warranty doesn&rsquo;t depend on it.</p>
+      </section>
 
       <div class="done" id="done">
         <div class="check" aria-hidden="true">&#10003;</div>
@@ -388,28 +336,6 @@
         <div class="regid">
           <small>Your registration number</small>
           <b id="regIdOut">&mdash;</b>
-        </div>
-
-        <div class="nextup" id="nextUp" style="display:none">
-          <h3>One more small thing?</h3>
-          <p id="nextUpCopy">If you have 30 seconds, posting the same review where you bought it helps the next person choose with confidence.</p>
-
-          <!-- Your own words, ready to paste into the public form. Bazaarvoice's
-               submission form can't be pre-filled from the page, so the next
-               best thing is making the copy one tap away. -->
-          <div class="yourwords" id="yourWords" style="display:none">
-            <small>Your review</small>
-            <p id="yourWordsText"></p>
-            <button type="button" id="copyReview">Copy it</button>
-          </div>
-
-          <button type="button" class="btn-out" id="bvStart" style="display:none">Write a public review</button>
-          <a class="btn-out" id="reviewLink" href="#" target="_blank" rel="noopener">Leave a review</a>
-
-          <!-- Bazaarvoice site-hosted Product Picker renders in here. -->
-          <div id="bvPicker" style="display:none"></div>
-
-          <p class="alsolink" id="alsoLink" style="display:none">Or post it on <a href="#" id="alsoLinkA" target="_blank" rel="noopener">the retailer's site</a>.</p>
         </div>
 
         <p class="support" id="supportBlock">
@@ -481,87 +407,6 @@
     });
   });
 
-  /* ---- Star rating ---- */
-  var rating = 0;
-  var starsWrap = document.getElementById('stars');
-  var starsEls = [].slice.call(starsWrap.querySelectorAll('.star'));
-  var labels = {1:'Not great',2:'Could be better',3:'It’s okay',4:'Really good',5:'Love it'};
-  function paint(n){ starsEls.forEach(function(s){ s.classList.toggle('on', +s.dataset.v <= n); }); }
-  function setRating(n){
-    rating = n;
-    document.getElementById('rating').value = n;
-    document.getElementById('starsLabel').textContent = labels[n];
-    paint(n);
-    document.getElementById('ratingField').classList.remove('invalid');
-  }
-  starsEls.forEach(function(s){
-    s.addEventListener('mouseenter', function(){ paint(+s.dataset.v); });
-    s.addEventListener('focus', function(){ paint(+s.dataset.v); });
-    s.addEventListener('click', function(){ setRating(+s.dataset.v); });
-  });
-  starsWrap.addEventListener('mouseleave', function(){ paint(rating); });
-  starsWrap.addEventListener('blurin', function(){ paint(rating); });
-  starsWrap.addEventListener('focusout', function(){ setTimeout(function(){
-    if(!starsWrap.contains(document.activeElement)) paint(rating);
-  },0); });
-
-  /* ---- Photos ---- */
-  var MAX_PHOTOS = 3, MAX_DIM = 1500, JPEG_Q = 0.82;
-  var photos = [];
-  var drop = document.getElementById('drop');
-  var fileInput = document.getElementById('fileInput');
-  var thumbs = document.getElementById('thumbs');
-  var photoHint = document.getElementById('photoHint');
-
-  drop.addEventListener('click', function(){ fileInput.click(); });
-  ['dragover','dragenter'].forEach(function(e){ drop.addEventListener(e,function(ev){ev.preventDefault();drop.classList.add('drag');}); });
-  ['dragleave','drop'].forEach(function(e){ drop.addEventListener(e,function(ev){ev.preventDefault();drop.classList.remove('drag');}); });
-  drop.addEventListener('drop', function(ev){ handleFiles(ev.dataTransfer.files); });
-  fileInput.addEventListener('change', function(){ handleFiles(fileInput.files); fileInput.value=''; });
-
-  function handleFiles(list){
-    var files = [].slice.call(list).filter(function(f){ return /^image\//.test(f.type); });
-    var slots = MAX_PHOTOS - photos.length;
-    if (slots <= 0){ photoHint.textContent = 'You’ve added the maximum of ' + MAX_PHOTOS + ' photos.'; return; }
-    files.slice(0, slots).forEach(compressAndAdd);
-  }
-  function compressAndAdd(file){
-    var reader = new FileReader();
-    reader.onload = function(e){
-      var img = new Image();
-      img.onload = function(){
-        var scale = Math.min(1, MAX_DIM / Math.max(img.width, img.height));
-        var w = Math.round(img.width*scale), h = Math.round(img.height*scale);
-        var c = document.createElement('canvas'); c.width=w; c.height=h;
-        c.getContext('2d').drawImage(img,0,0,w,h);
-        photos.push({ dataUrl:c.toDataURL('image/jpeg', JPEG_Q), name:file.name, type:'image/jpeg' });
-        renderThumbs();
-      };
-      img.onerror = function(){ photoHint.textContent = 'Couldn’t read that image, please try another.'; };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  }
-  function renderThumbs(){
-    thumbs.innerHTML='';
-    photos.forEach(function(p,i){
-      var d=document.createElement('div'); d.className='thumb';
-      var im=document.createElement('img'); im.src=p.dataUrl; im.alt='Photo '+(i+1); d.appendChild(im);
-      var b=document.createElement('button'); b.type='button'; b.innerHTML='&times;'; b.setAttribute('aria-label','Remove photo '+(i+1));
-      b.onclick=function(){ photos.splice(i,1); renderThumbs(); };
-      d.appendChild(b); thumbs.appendChild(d);
-    });
-    photoHint.textContent = photos.length ? photos.length + ' of ' + MAX_PHOTOS + ' added' : '';
-  }
-
-  /* ---- Where to send the public review ---- */
-  var REVIEW_LINKS = {
-    'The Home Depot':{url:'https://www.homedepot.com/b/Bath-Bathtubs/Bootz-Industries/N-5yc1vZbzb7Z9t', name:'Home Depot'},
-    "Lowe's":{url:'https://www.lowes.com/search?searchTerm=bootz', name:"Lowe's"},
-    'Menards':{url:'https://www.menards.com/main/search.html?search=bootz', name:'Menards'},
-    'Amazon':{url:'https://www.amazon.com/s?k=bootz+industries', name:'Amazon'}
-  };
-
   /* ---- Bazaarvoice public review hand-off -----------------------------------
      Lets the customer post a real public review from this page instead of being
      sent off to a retailer. Off entirely if `clientName` is blank, in which case
@@ -629,7 +474,6 @@
 
   var bvEnabled = !!BV.clientName;
   var bvScriptAdded = false;
-  var bvRetailer = null;        // set on submit, for the fallback below
   var bvFellBack = false;
 
   function loadBvJs(onFail){
@@ -643,25 +487,18 @@
     document.head.appendChild(s);
   }
 
-  /* If Bazaarvoice never renders — bv.js blocked, Product Picker not enabled in
-     the Style Editor, no category/family mappings in the feed — don't leave the
-     customer staring at an empty box. Put the retailer hand-off back. */
+  /* If Bazaarvoice never renders — bv.js blocked, the feature not enabled in the
+     Style Editor, no mappings in the feed — say so quietly and get out of the way.
+     The review is optional, so a BV outage must never look like a broken form or
+     imply the registration itself failed. */
   function bvFallback(){
     if(bvFellBack) return;
     bvFellBack = true;
     document.getElementById('bvPicker').style.display = 'none';
-    document.getElementById('alsoLink').style.display = 'none';
-    if(bvRetailer){
-      var a = document.getElementById('reviewLink');
-      a.href = bvRetailer.url;
-      a.textContent = 'Review it on ' + bvRetailer.name;
-      a.style.display = 'block';
-      document.getElementById('nextUpCopy').textContent =
-        'If you have 30 seconds, posting the same review where you bought it helps ' +
-        'the next person choose with confidence.';
-    } else {
-      document.getElementById('nextUp').style.display = 'none';
-    }
+    document.getElementById('reviewSkip').style.display = 'none';
+    document.getElementById('reviewLede').textContent =
+      'Public reviews aren’t loading right now. That doesn’t affect your registration — ' +
+      'go ahead and register above.';
   }
 
   /* Which tier we're on: 0 = nothing tried, 1 = product-scoped submission form,
@@ -721,6 +558,15 @@
       if(el.children.length || el.textContent.trim()){
         clearInterval(poll);
         if(wait.parentNode) wait.parentNode.removeChild(wait);
+        // "Pick what you installed above" has served its purpose once they have.
+        var lede = document.getElementById('reviewLede');
+        if(!lede.dataset.done){
+          lede.dataset.done = '1';
+          lede.textContent = bvTier === 1
+            ? 'Your ' + productName + ' is already filled in — just the rating and a ' +
+              'sentence or two, and it goes live on the product page.'
+            : 'Confirm which one you installed and add a rating — it goes live on the product page.';
+        }
       } else if(waited >= limit){
         clearInterval(poll);
         if(bvTier === 1) openBvReview(productName);   // try the picker instead
@@ -729,19 +575,19 @@
     }, 400);
   }
 
-  document.getElementById('copyReview').addEventListener('click', function(){
-    var self = this, text = document.getElementById('yourWordsText').textContent;
-    function done(){ self.textContent = 'Copied'; setTimeout(function(){ self.textContent = 'Copy it'; }, 2000); }
-    if(navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(text).then(done, function(){ self.textContent = 'Select and copy above'; });
-    } else {
-      // Older mobile Safari: fall back to selecting the text for them.
-      var r = document.createRange();
-      r.selectNodeContents(document.getElementById('yourWordsText'));
-      var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
-      self.textContent = 'Selected — press copy';
-    }
-  });
+  /* The product dropdown is the only product selection on this page — picking one
+     is what brings the review form up, already attached to it. Fires once: BV owns
+     that subtree afterwards and re-rendering it under someone mid-review would
+     throw their words away. Changing the dropdown after that still updates the
+     warranty term; the review stays pointed at the first product they chose. */
+  if(bvEnabled){
+    family.addEventListener('change', function(){
+      if(!family.value || bvTier !== 0) return;
+      openBvReview(family.value);
+    });
+  } else {
+    document.getElementById('reviewBlock').style.display = 'none';
+  }
 
   /* ---- Submit ---- */
   var form = document.getElementById('regForm');
@@ -757,7 +603,6 @@
     if(!fullName.value.trim()){ setInvalid(fullName,true); ok=false; } else setInvalid(fullName,false);
     if(!emailOk(email.value.trim())){ setInvalid(email,true); ok=false; } else setInvalid(email,false);
     if(!family.value){ setInvalid(family,true); ok=false; } else setInvalid(family,false);
-    if(!rating){ document.getElementById('ratingField').classList.add('invalid'); ok=false; }
     if(!ok){ var bad=form.querySelector('.invalid'); if(bad) bad.scrollIntoView({behavior:'smooth',block:'center'}); return; }
     if(form.company.value){ return; }   // honeypot
 
@@ -773,10 +618,7 @@
       modelNumber: form.modelNumber.value.trim(),
       purchaseDate: form.purchaseDate.value,
       purchasedFrom: form.purchasedFrom.value,
-      rating: rating,
-      review: form.review.value.trim(),
       optIn: form.optIn.checked,
-      photos: photos.map(function(p){ return {dataUrl:p.dataUrl, name:p.name, type:p.type}; }),
       pageUrl: location.href,
       submittedAt: new Date().toISOString()
     };
@@ -792,59 +634,27 @@
           ? 'Your warranty record is on file. A confirmation is on its way to ' + payload.email + '.'
           : 'Your warranty record is on file. Hang on to the number below — it’s all we need if you ever call in.';
 
-        // Everyone gets the public-review hand-off, whatever they rated it.
-        var link = REVIEW_LINKS[payload.purchasedFrom];
-        var retailerLink = document.getElementById('reviewLink');
-        var bvStart = document.getElementById('bvStart');
-        bvRetailer = link || null;
-
-        if(bvEnabled){
-          // On-site Product Picker is the primary route; the retailer link stays
-          // as a secondary option, since syndication out to a given retailer
-          // depends on the agreements BV has in place for them.
-          document.getElementById('nextUpCopy').textContent = bvHasProduct(payload.productType)
-            ? 'If you have a minute, post it publicly — we’ll carry over the ' +
-              payload.productType + ' you just registered so you only need your review.'
-            : 'If you have a minute, post it publicly — pick your product below and your ' +
-              'review helps the next person choose with confidence.';
-          bvStart.style.display = 'block';
-          retailerLink.style.display = 'none';
-
-          if(payload.review){
-            document.getElementById('yourWordsText').textContent = payload.review;
-            document.getElementById('yourWords').style.display = 'block';
-          }
-          if(link){
-            var also = document.getElementById('alsoLinkA');
-            also.href = link.url;
-            also.textContent = link.name;
-            document.getElementById('alsoLink').style.display = 'block';
-          }
-          bvStart.addEventListener('click', function(){
-            bvStart.style.display = 'none';
-            openBvReview(payload.productType);
-            document.getElementById('bvPicker').scrollIntoView({behavior:'smooth', block:'start'});
-          });
-          document.getElementById('nextUp').style.display = 'block';
-        } else if(link){
-          retailerLink.href = link.url;
-          retailerLink.textContent = 'Review it on ' + link.name;
-          document.getElementById('nextUp').style.display = 'block';
-        }
-        if(rating <= 3){
-          var support = document.getElementById('supportBlock');
-          support.innerHTML =
-            'Sorry this one didn’t land the way it should. Our team has your note and will look at it — ' +
-            'if you’d rather talk it through now, call <a href="tel:18004437269">(800) 443-7269</a>.';
-          // Make it right first, then still offer the public review — we don't gate
-          // the invitation on how someone rated us.
-          support.parentNode.insertBefore(support, document.getElementById('nextUp'));
-          support.style.marginBottom = '4px';
-        }
+        var done = document.getElementById('done');
+        var reviewBlock = document.getElementById('reviewBlock');
 
         document.getElementById('regForm').style.display='none';
         document.getElementById('benefits').style.display='none';
-        document.getElementById('done').style.display='block';
+        done.style.display='block';
+
+        /* Deliberately does NOT tear the review section down. Someone may be part
+           way through writing a review when they register — Bazaarvoice posts on
+           its own button, independently of ours, so destroying that subtree would
+           throw away words they'd already typed. Move it below the confirmation
+           and leave it alone. */
+        if(bvEnabled && !bvFellBack){
+          done.parentNode.insertBefore(reviewBlock, done.nextSibling);
+          document.getElementById('reviewLede').textContent =
+            'Your warranty is filed. If you haven’t already, a review here is the single ' +
+            'most useful thing for the next person choosing this product.';
+          document.getElementById('reviewSkip').style.display = 'none';
+        } else {
+          reviewBlock.style.display = 'none';
+        }
         document.getElementById('card').scrollIntoView({behavior:'smooth',block:'start'});
       })
       .catch(function(){

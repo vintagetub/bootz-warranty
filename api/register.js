@@ -1,41 +1,42 @@
-// Vercel serverless function — Bootz product registration + review intake.
+// Vercel serverless function — Bootz warranty registration.
 //
-// One POST does four things, each of which degrades gracefully if unconfigured:
-//   1. uploads any photos to a public GCS bucket
-//   2. appends a row to the Google Sheet (self-healing header)
-//   3. emails the customer a branded confirmation via Resend
-//   4. emails an internal alert when a registration comes in at 3 stars or below
+// One POST does two things, each of which degrades gracefully if unconfigured:
+//   1. appends a row to the Google Sheet (self-healing header)
+//   2. emails the customer a branded confirmation via Resend
+//
+// Reviews are NOT handled here. They go directly to Bazaarvoice from the page,
+// which is the system of record for review content — so this function no longer
+// takes a rating, review text or photos, and there is no low-rating alert. See
+// the README for what that removed and who picks up customer follow-up.
 //
 // Env vars:
-//   GOOGLE_SA_KEY   base64 of the service-account JSON key   (required for sheet + photos)
+//   GOOGLE_SA_KEY   base64 of the service-account JSON key   (required for sheet)
 //   SHEET_ID        target Google Sheet ID                   (required for sheet)
 //   SHEET_TAB       tab within that sheet                    (optional, default below)
-//   GCS_BUCKET      photo bucket name                        (optional, default below)
 //   RESEND_API_KEY  Resend key                               (required for any email)
 //   MAIL_FROM       e.g. "Bootz <registration@notify.bootz.com>"   (required for any email)
 //   MAIL_REPLY_TO   customer-facing reply address            (optional)
-//   ALERT_TO        comma-separated internal recipients      (optional; enables low-rating alerts)
-//   ALERT_THRESHOLD max star rating that triggers an alert   (optional, default 3)
 //   PUBLIC_BASE_URL absolute origin for email images         (optional, default below)
 
 import { google } from 'googleapis';
-import { Storage } from '@google-cloud/storage';
 
-const BUCKET = process.env.GCS_BUCKET || 'dreamline-warranty-photos';
 // Bootz writes to its OWN tab. The DreamLine/American Standard function targets
 // the default first tab with a different 12-column header and self-heals it on
 // every write — sharing a tab would leave the two apps rewriting each other's
 // header row and misaligning the existing rows.
+//
+// NOTE: the header below is narrower than it used to be (Rating, Review and
+// Photos are gone). appendRow rewrites row 1 whenever HEADERS changes, but it
+// cannot rewrite the rows underneath — so pointing this at a tab that already
+// holds 17-column rows would re-label their columns. Point SHEET_TAB at a fresh
+// tab if the existing one has data worth keeping.
 const TAB = process.env.SHEET_TAB || 'Bootz';
 const BASE_URL = process.env.PUBLIC_BASE_URL || 'https://bootz-warranty.vercel.app';
-const ALERT_THRESHOLD = Number(process.env.ALERT_THRESHOLD || 3);
 const SUPPORT_PHONE = '(800) 443-7269';
 
 const HEADERS = ['Timestamp', 'Brand', 'Registration ID', 'Audience', 'Full Name', 'Email',
   'Company', 'Product', 'Warranty Term', 'Model #', 'Purchase Date', 'Purchased From',
-  'Rating', 'Review', 'Photos', 'Marketing Opt-In', 'Source URL'];
-
-const slug = (s) => String(s || 'brand').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  'Marketing Opt-In', 'Source URL'];
 
 // Escape anything that reaches an HTML email or the internal alert.
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
@@ -69,33 +70,6 @@ function sheetsClient() {
   return google.sheets({ version: 'v4', auth });
 }
 
-async function uploadPhotos(photos, modelNumber, brand) {
-  const key = saKey();
-  if (!photos?.length || !key) return [];
-  const storage = new Storage({
-    projectId: key.project_id,
-    credentials: { client_email: key.client_email, private_key: key.private_key },
-  });
-  const bucket = storage.bucket(BUCKET);
-  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const base = (modelNumber || 'photo').replace(/[^\w-]+/g, '_').slice(0, 40);
-  const folder = slug(brand) || 'submissions';
-  const urls = [];
-  for (let i = 0; i < photos.length; i++) {
-    const m = String(photos[i].dataUrl || '').match(/^data:(.*?);base64,(.*)$/);
-    if (!m) continue;
-    const ext = (m[1].split('/')[1] || 'jpg').replace('jpeg', 'jpg');
-    const path = `${folder}/${base}-${stamp}-${i + 1}.${ext}`;
-    await bucket.file(path).save(Buffer.from(m[2], 'base64'), {
-      contentType: m[1], resumable: false,
-      metadata: { cacheControl: 'public, max-age=31536000' },
-    });
-    urls.push(`https://storage.googleapis.com/${BUCKET}/${path}`);
-  }
-  return urls;
-}
-
-// Create the Bootz tab if it isn't there yet, so a fresh sheet needs no setup.
 async function ensureTab(sheets, spreadsheetId) {
   const meta = await sheets.spreadsheets.get({ spreadsheetId, fields: 'sheets.properties.title' });
   if (meta.data.sheets?.some((s) => s.properties.title === TAB)) return;
@@ -160,8 +134,6 @@ function confirmationHtml(d) {
        </tr>`
     : '';
 
-  const lowRating = Number(d.rating) <= ALERT_THRESHOLD;
-
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Your Bootz registration</title></head>
@@ -179,7 +151,7 @@ function confirmationHtml(d) {
 
     <tr><td style="padding:28px 26px 6px;">
       <p style="margin:0 0 18px;font-size:15.5px;font-weight:300;color:#000000;line-height:1.6;">
-        Hi ${esc((d.fullName || '').split(' ')[0] || 'there')}, thanks for registering &mdash; and for telling us how it went.
+        Hi ${esc((d.fullName || '').split(' ')[0] || 'there')}, thanks for registering.
         Hold on to the number below; it&rsquo;s all we need if you ever call in.
       </p>
 
@@ -197,24 +169,8 @@ function confirmationHtml(d) {
         ${row('Model number', d.modelNumber)}
         ${row('Purchased from', d.purchasedFrom)}
         ${row('Purchase date', d.purchaseDate)}
-        ${row('Your rating', d.rating ? `${d.rating} out of 5` : '')}
       </table>
     </td></tr>
-
-    ${lowRating ? `
-    <tr><td style="padding:6px 26px 0;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-             style="background:#F0FAFB;border:1px solid #BFE9ED;border-left:4px solid #2FC0CC;border-radius:8px;">
-        <tr><td style="padding:14px 16px;">
-          <div style="font-size:14.5px;font-weight:500;color:#002D4B;margin-bottom:4px;">We'd like to make this right</div>
-          <div style="font-size:13.5px;font-weight:300;color:#64676C;line-height:1.55;">
-            Your note is already with our team. If you'd rather sort it out now, call us at
-            <a href="tel:18004437269" style="color:#002D4B;font-weight:500;text-decoration:none;">${SUPPORT_PHONE}</a>
-            and have your registration number handy.
-          </div>
-        </td></tr>
-      </table>
-    </td></tr>` : ''}
 
     <tr><td style="padding:22px 26px 28px;">
       <a href="https://bootz.com/warranty/"
@@ -241,41 +197,6 @@ function confirmationHtml(d) {
 </body></html>`;
 }
 
-/* ---------- Internal alert on a low rating ---------- */
-function alertHtml(d, photoUrls) {
-  const line = (l, v) => v
-    ? `<tr><td style="padding:5px 14px 5px 0;color:#64676C;font-size:13px;">${esc(l)}</td>
-           <td style="padding:5px 0;color:#000;font-size:13px;font-weight:500;">${esc(v)}</td></tr>`
-    : '';
-  return `<div style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;max-width:600px;">
-    <div style="background:#002D4B;color:#fff;padding:16px 18px;border-radius:8px 8px 0 0;">
-      <div style="font-size:17px;font-weight:700;">${esc(d.rating)}-star Bootz registration</div>
-      <div style="font-size:13.5px;font-weight:300;color:#CFE0EA;margin-top:3px;">${esc(d.registrationId)} &middot; reach out before this becomes a public review</div>
-    </div>
-    <div style="border:1px solid #E4E5E6;border-top:0;border-radius:0 0 8px 8px;padding:16px 18px;">
-      <table cellpadding="0" cellspacing="0">
-        ${line('Customer', d.fullName)}
-        ${line('Email', d.email)}
-        ${line('Audience', d.audience)}
-        ${line('Company', d.companyName)}
-        ${line('Product', d.productType)}
-        ${line('Warranty', d.warrantyTerm)}
-        ${line('Model #', d.modelNumber)}
-        ${line('Purchased from', d.purchasedFrom)}
-        ${line('Purchase date', d.purchaseDate)}
-      </table>
-      ${d.review ? `<div style="margin-top:14px;padding:12px 14px;background:#EBEBEC;border-radius:8px;
-        font-size:14px;color:#000;font-weight:300;line-height:1.55;white-space:pre-wrap;">${esc(d.review)}</div>` : ''}
-      ${photoUrls.length ? `<div style="margin-top:12px;font-size:13px;">Photos: ${
-        photoUrls.map((u, i) => `<a href="${esc(u)}">${i + 1}</a>`).join(' &middot; ')}</div>` : ''}
-      <div style="margin-top:14px;font-size:13px;">
-        <a href="mailto:${encodeURIComponent(d.email)}?subject=${encodeURIComponent('About your Bootz product (' + d.registrationId + ')')}"
-           style="color:#002D4B;font-weight:500;">Reply to the customer &rarr;</a>
-      </div>
-    </div>
-  </div>`;
-}
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -284,7 +205,8 @@ export default async function handler(req, res) {
   try {
     const b = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
     if (b.company) return res.status(200).json({ ok: true });               // honeypot
-    if (!b.fullName || !b.email || !b.rating) {
+    // The review is optional and no longer arrives here, so it is not required.
+    if (!b.fullName || !b.email) {
       return res.status(400).json({ ok: false, error: 'Missing required fields' });
     }
 
@@ -300,23 +222,19 @@ export default async function handler(req, res) {
       modelNumber: b.modelNumber || '',
       purchaseDate: b.purchaseDate || '',
       purchasedFrom: b.purchasedFrom || '',
-      rating: b.rating,
-      review: b.review || '',
     };
 
-    const photoUrls = await uploadPhotos(b.photos, d.modelNumber, brand);
-
-    // The sheet is the system of record — if it fails, the submission failed.
+    // The sheet is the system of record for the warranty — if it fails, the
+    // submission failed. Review content lives in Bazaarvoice, not here.
     const sheets = sheetsClient();
     if (sheets) {
       await appendRow(sheets, [
         new Date().toISOString(), brand, d.registrationId, d.audience, d.fullName, d.email,
         d.companyName, d.productType, d.warrantyTerm, d.modelNumber, d.purchaseDate,
-        d.purchasedFrom, d.rating, d.review, photoUrls.join('\n'),
-        b.optIn ? 'Yes' : 'No', b.pageUrl || '',
+        d.purchasedFrom, b.optIn ? 'Yes' : 'No', b.pageUrl || '',
       ]);
     } else {
-      console.log('[register] sheet not configured; submission:', { ...d, photos: photoUrls });
+      console.log('[register] sheet not configured; submission:', d);
     }
 
     // Email is best-effort — a mail failure must never lose a registration.
@@ -330,21 +248,8 @@ export default async function handler(req, res) {
       });
     } catch (e) { console.error('[register] confirmation email error', e?.message || e); }
 
-    try {
-      const alertTo = (process.env.ALERT_TO || '').split(',').map((s) => s.trim()).filter(Boolean);
-      if (alertTo.length && Number(d.rating) <= ALERT_THRESHOLD) {
-        await sendMail({
-          to: alertTo,
-          subject: `${d.rating}★ Bootz registration — ${d.fullName} (${d.registrationId})`,
-          html: alertHtml(d, photoUrls),
-          replyTo: d.email,
-        });
-      }
-    } catch (e) { console.error('[register] alert email error', e?.message || e); }
-
     return res.status(200).json({
-      ok: true, registrationId: d.registrationId, photos: photoUrls.length,
-      sheet: !!sheets, emailed,
+      ok: true, registrationId: d.registrationId, sheet: !!sheets, emailed,
     });
   } catch (err) {
     console.error('[register] error', err?.message || err);
