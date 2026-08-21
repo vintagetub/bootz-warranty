@@ -135,7 +135,6 @@
   .review-skip{font-size:12.5px;color:var(--grey);font-weight:300;margin-top:10px;opacity:.85}
   /* Bazaarvoice brings its own styles; this only reserves room */
   #bvPicker{margin-top:14px}
-  .bvwait{padding:14px 0;font-size:13.5px;color:var(--grey);text-align:center}
 
   /* ---------- Success banner (same screen, not a second one) ---------- */
   .done{display:none;background:#F0FAFB;border:1px solid #BFE9ED;border-left:4px solid var(--cyan);
@@ -317,9 +316,9 @@
       <!-- Review section. Sits outside the <form> on purpose: Bazaarvoice renders
            its own <form>, and nesting one form inside another is invalid HTML that
            browsers silently break. Styled to read as one continuous form. -->
-      <section class="review-block" id="reviewBlock" aria-labelledby="reviewHead">
+      <section class="review-block" id="reviewBlock" style="display:none" aria-labelledby="reviewHead">
         <h3 id="reviewHead">Rate the install <span class="opt">(optional)</span></h3>
-        <p class="review-lede" id="reviewLede">Pick what you installed above and you can leave a public review right here &mdash; it&rsquo;s the single most useful thing for the next person choosing a tub.</p>
+        <p class="review-lede" id="reviewLede">Loading the review form&hellip;</p>
         <div id="bvPicker" style="display:none"></div>
         <p class="review-skip" id="reviewSkip">Not now? Just register above &mdash; your warranty doesn&rsquo;t depend on it.</p>
       </section>
@@ -487,6 +486,7 @@
   function bvFallback(){
     if(bvFellBack) return;
     bvFellBack = true;
+    console.warn('[bv] no review form available — section stood down');
     document.getElementById('bvPicker').style.display = 'none';
     document.getElementById('reviewSkip').style.display = 'none';
     document.getElementById('reviewLede').textContent =
@@ -530,38 +530,29 @@
     }
     if(BV.campaignId) el.setAttribute('data-bv-campaign-id', BV.campaignId);
 
-    // Kept as a sibling of the BV element, not inside it, so it doesn't read as
-    // rendered BV content to the no-show check below.
-    var wait = document.createElement('p');
-    wait.className = 'bvwait';
-    wait.textContent = 'Loading the review form…';
-
-    box.appendChild(wait);
     box.appendChild(el);
     box.style.display = 'block';
+    console.info('[bv] tier ' + bvTier + ' — ' + el.getAttribute('data-bv-show') +
+                 ' for "' + productName + '"');
     loadBvJs(bvFallback);               // script itself failed → straight to tier 3
 
-    /* BV renders into our element. Drop the placeholder once it does; if nothing
-       appears, fall through to the next tier. Tier 1 gets a shorter leash than
-       tier 2 because it's the one relying on an unconfirmed attribute value. */
+    /* BV renders into our element. The section lede is the loading state until it
+       does; if nothing appears, fall through to the next tier. Tier 1 gets a
+       shorter leash than tier 2 — it's the one relying on an unconfirmed value. */
     var limit = bvTier === 1 ? 5000 : 8000;
     var waited = 0;
     var poll = setInterval(function(){
       waited += 400;
       if(el.children.length || el.textContent.trim()){
         clearInterval(poll);
-        if(wait.parentNode) wait.parentNode.removeChild(wait);
-        // "Pick what you installed above" has served its purpose once they have.
-        var lede = document.getElementById('reviewLede');
-        if(!lede.dataset.done){
-          lede.dataset.done = '1';
-          lede.textContent = bvTier === 1
-            ? 'Your ' + productName + ' is already filled in — just the rating and a ' +
-              'sentence or two, and it goes live on the product page.'
-            : 'Confirm which one you installed and add a rating — it goes live on the product page.';
-        }
+        console.info('[bv] rendered on tier ' + bvTier + ' after ' + waited + 'ms');
+        document.getElementById('reviewLede').textContent = bvTier === 1
+          ? 'Your ' + productName + ' is already filled in — just the rating and a ' +
+            'sentence or two, and it goes live on the product page.'
+          : 'Confirm which one you installed and add a rating — it goes live on the product page.';
       } else if(waited >= limit){
         clearInterval(poll);
+        console.warn('[bv] tier ' + bvTier + ' did not render within ' + limit + 'ms');
         if(bvTier === 1) openBvReview(productName);   // try the picker instead
         else bvFallback();
       }
@@ -576,10 +567,11 @@
   if(bvEnabled){
     family.addEventListener('change', function(){
       if(!family.value || bvTier !== 0) return;
+      // Only reveal the section once there's something in it — an empty block
+      // promising a review form reads as broken.
+      document.getElementById('reviewBlock').style.display = 'block';
       openBvReview(family.value);
     });
-  } else {
-    document.getElementById('reviewBlock').style.display = 'none';
   }
 
   /* ---- Submit ---- */
