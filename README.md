@@ -144,6 +144,28 @@ Other details worth knowing:
   its own `<form>`, and nested forms are invalid HTML that browsers silently
   break. A top border makes the seam read as one continuous form.
 
+### Two buttons, and why there can't be one
+
+The page has two submit buttons: **Register my product** (ours) and Bazaarvoice's
+**Post review** inside the review section. That's not a design choice — the JS
+embed gives no way for our submit to carry BV's fields. No callback, no
+programmatic submit, nothing our form can reach. One button submitting both would
+require the **Conversations API**, which is **$10k per brand** and therefore out.
+
+So the embed is permanent, and the risk it creates is someone typing a review,
+hitting Register, and leaving believing they posted it. Three things guard that:
+
+- The review section says up front that it posts on its own button, separately.
+- Registering does **not** clear the review form.
+- After registering, the note under the review turns into a raised warning:
+  *"Started a review? It hasn't been sent yet."*
+
+Don't "solve" this by having our button reach into BV's widget and click its
+submit. If BV renders in an iframe it's impossible cross-origin, and if it
+doesn't, it's an undocumented internal that will break on a BV release — silently,
+losing reviews, with nothing in our logs. Two honest buttons beat one that
+sometimes lies.
+
 ### Unverified: `BV.submissionShow`
 
 Every other attribute comes from the Product Picker doc. The site-hosted

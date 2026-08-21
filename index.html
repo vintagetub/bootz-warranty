@@ -133,6 +133,9 @@
   .review-block h3 .opt{font-weight:300;font-size:13px;color:var(--grey);letter-spacing:0}
   .review-lede{font-size:14px;color:var(--grey);font-weight:300;line-height:1.55;margin-bottom:4px}
   .review-skip{font-size:12.5px;color:var(--grey);font-weight:300;margin-top:10px;opacity:.85}
+  /* Post-registration: an unsent review is worth more than a quiet footnote */
+  .review-skip.pending{opacity:1;color:var(--navy);font-weight:400;background:#FFF8E6;
+    border:1px solid #F0DFA8;border-radius:8px;padding:10px 12px}
   /* Bazaarvoice brings its own styles; this only reserves room */
   #bvPicker{margin-top:14px}
 
@@ -320,7 +323,7 @@
         <h3 id="reviewHead">Rate the install <span class="opt">(optional)</span></h3>
         <p class="review-lede" id="reviewLede">Loading the review form&hellip;</p>
         <div id="bvPicker" style="display:none"></div>
-        <p class="review-skip" id="reviewSkip">Not now? Just register above &mdash; your warranty doesn&rsquo;t depend on it.</p>
+        <p class="review-skip" id="reviewSkip">Your review posts with its own button above, separately from your registration. Not now? Just register &mdash; your warranty doesn&rsquo;t depend on it.</p>
       </section>
 
       <!-- Confirmation is a banner on this same screen, not a screen of its own.
@@ -547,7 +550,7 @@
         clearInterval(poll);
         console.info('[bv] rendered on tier ' + bvTier + ' after ' + waited + 'ms');
         document.getElementById('reviewLede').textContent = bvTier === 1
-          ? 'Your ' + productName + ' is already filled in — just the rating and a ' +
+          ? 'Your ' + productName + ' is already filled in — add a rating and a ' +
             'sentence or two, and it goes live on the product page.'
           : 'Confirm which one you installed and add a rating — it goes live on the product page.';
       } else if(waited >= limit){
@@ -633,7 +636,14 @@
         if(!bvEnabled || bvFellBack){
           document.getElementById('reviewBlock').style.display = 'none';
         } else {
-          document.getElementById('reviewSkip').style.display = 'none';
+          /* Bazaarvoice posts on its own button, which our submit cannot reach.
+             The failure that costs a real review is someone typing one, hitting
+             Register, and leaving believing they'd posted it — so say plainly
+             that the review is still unsent. */
+          var skip = document.getElementById('reviewSkip');
+          skip.className = 'review-skip pending';
+          skip.textContent = 'Started a review? It hasn’t been sent yet — use its own ' +
+            'button above to post it. Your registration is already saved either way.';
         }
         done.scrollIntoView({behavior:'smooth',block:'center'});
       })
