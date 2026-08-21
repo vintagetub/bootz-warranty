@@ -137,16 +137,12 @@
   #bvPicker{margin-top:14px}
   .bvwait{padding:14px 0;font-size:13.5px;color:var(--grey);text-align:center}
 
-  /* ---------- Success ---------- */
-  .done{display:none;text-align:center;padding:16px 4px 8px}
-  .done .check{width:70px;height:70px;border-radius:50%;background:var(--cyan);color:var(--white);
-    font-size:36px;line-height:70px;margin:0 auto 18px}
-  .done h2{font-size:25px;color:var(--navy);margin-bottom:10px}
-  .done p{color:var(--grey);max-width:440px;margin:0 auto 10px;font-size:15px;font-weight:300}
-  .regid{display:inline-block;margin:16px auto 4px;background:var(--grey-bg);border:1px dashed var(--line);
-    border-radius:8px;padding:12px 20px}
-  .regid small{display:block;font-size:12px;color:var(--grey);font-weight:300;margin-bottom:3px}
-  .regid b{font-size:20px;font-weight:700;color:var(--navy);letter-spacing:.06em}
+  /* ---------- Success banner (same screen, not a second one) ---------- */
+  .done{display:none;background:#F0FAFB;border:1px solid #BFE9ED;border-left:4px solid var(--cyan);
+    border-radius:8px;padding:13px 15px;font-size:14px;color:var(--grey);font-weight:300;line-height:1.6}
+  .done b{color:var(--navy);font-weight:500}
+  .done .regid{display:inline-block;margin-left:4px;color:var(--navy)}
+  .done .regid b{font-weight:700;letter-spacing:.05em}
   .support{margin-top:20px;font-size:13.5px;color:var(--grey);font-weight:300}
   .support a{color:var(--navy);font-weight:500;text-decoration:none}
 
@@ -328,21 +324,18 @@
         <p class="review-skip" id="reviewSkip">Not now? Just register above &mdash; your warranty doesn&rsquo;t depend on it.</p>
       </section>
 
-      <div class="done" id="done">
-        <div class="check" aria-hidden="true">&#10003;</div>
-        <h2>You're registered</h2>
-        <p id="doneMsg">Your warranty record is on file and a confirmation is on its way to your inbox.</p>
-
-        <div class="regid">
-          <small>Your registration number</small>
-          <b id="regIdOut">&mdash;</b>
-        </div>
-
-        <p class="support" id="supportBlock">
-          Need help with this product? Call Bootz support at
-          <a href="tel:18004437269">(800) 443-7269</a>.
-        </p>
+      <!-- Confirmation is a banner on this same screen, not a screen of its own.
+           It reports the registration number and gets out of the way. -->
+      <div class="done" id="done" role="status">
+        <b>Registered.</b>
+        <span id="doneMsg">Your warranty record is on file.</span>
+        <span class="regid">No. <b id="regIdOut">&mdash;</b></span>
       </div>
+
+      <p class="support" id="supportBlock">
+        Need help with this product? Call Bootz support at
+        <a href="tel:18004437269">(800) 443-7269</a>.
+      </p>
     </section>
   </main>
 
@@ -631,31 +624,26 @@
 
         document.getElementById('regIdOut').textContent = res.registrationId || '—';
         document.getElementById('doneMsg').textContent = res.emailed
-          ? 'Your warranty record is on file. A confirmation is on its way to ' + payload.email + '.'
-          : 'Your warranty record is on file. Hang on to the number below — it’s all we need if you ever call in.';
+          ? 'On file, and a confirmation is on its way to ' + payload.email + '.'
+          : 'Your warranty record is on file — keep this number for any future call.';
 
+        /* One screen. The warranty fields collapse to a banner in their place;
+           nothing navigates, and the review section is left exactly as it is —
+           Bazaarvoice posts on its own button, so tearing that subtree down would
+           throw away a review someone had already started typing. */
         var done = document.getElementById('done');
-        var reviewBlock = document.getElementById('reviewBlock');
-
-        document.getElementById('regForm').style.display='none';
+        var form = document.getElementById('regForm');
+        form.parentNode.insertBefore(done, form);
+        form.style.display='none';
         document.getElementById('benefits').style.display='none';
         done.style.display='block';
 
-        /* Deliberately does NOT tear the review section down. Someone may be part
-           way through writing a review when they register — Bazaarvoice posts on
-           its own button, independently of ours, so destroying that subtree would
-           throw away words they'd already typed. Move it below the confirmation
-           and leave it alone. */
-        if(bvEnabled && !bvFellBack){
-          done.parentNode.insertBefore(reviewBlock, done.nextSibling);
-          document.getElementById('reviewLede').textContent =
-            'Your warranty is filed. If you haven’t already, a review here is the single ' +
-            'most useful thing for the next person choosing this product.';
-          document.getElementById('reviewSkip').style.display = 'none';
+        if(!bvEnabled || bvFellBack){
+          document.getElementById('reviewBlock').style.display = 'none';
         } else {
-          reviewBlock.style.display = 'none';
+          document.getElementById('reviewSkip').style.display = 'none';
         }
-        document.getElementById('card').scrollIntoView({behavior:'smooth',block:'start'});
+        done.scrollIntoView({behavior:'smooth',block:'center'});
       })
       .catch(function(){
         btn.disabled=false; btn.textContent='Register my product';
