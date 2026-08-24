@@ -72,7 +72,24 @@ come from?" and appearing when they answer it. Same fallback when `clientName`
 is blank. If they bought it somewhere we can't link to, the block stays hidden;
 there is never an empty panel sitting under the form.
 
-`BV_FAMILY` maps each Bootz product family to the `ExternalId` of any product in
+### Scoping the picker
+
+Two levers, in priority order — never both at once, which Bazaarvoice rejects.
+
+**Category, per product group.** `BV_CATEGORY_BY_GROUP` maps the optgroups in
+"What did you install?" to category `ExternalId`s, read straight off the
+`<optgroup label>` so it stays in step with the dropdown:
+
+| Group | Category `ExternalId` |
+| --- | --- |
+| Shower bases | `Shower_Base` |
+
+Shower bases are the only group the form offers, so every registration maps to a
+known category. **If a group is added back to the dropdown, add it here too** —
+anything unmapped falls through to `BV.categoryId` and would open the picker on
+shower bases.
+
+**Family.** `BV_FAMILY` maps each Bootz product family to the `ExternalId` of any product in
 the matching Bazaarvoice product family. Every entry is currently **blank**, so
 the picker opens on the root category. Fill an entry in and selecting that
 product re-renders the picker scoped to that family
@@ -156,10 +173,14 @@ faithful fallback everywhere else.
 
 ## What this does that the DreamLine / American Standard version didn't
 
-- **Real product picker** — the actual Bootz line (Aloha, Bootzcast, Maui,
-  Mauicast, Kona, Honolulu, Cambridge, Freedom, ShowerCast, NexTile, the
-  glue-up wall systems, and all seven sinks), grouped by category. No more
-  free-text product names to clean up later.
+- **Real product picker** — named Bootz products rather than a free-text box, so
+  there are no product names to clean up later. **Currently shower bases only**
+  (ShowerCast, Americast shower base, Other shower base) to match the one
+  category mapped in the Bazaarvoice catalogue — see
+  [Scoping the picker](#scoping-the-picker). The bathtub, wall kit and sink
+  optgroups were removed from `index.html`; their warranty terms are still in
+  the `WARRANTY` map, so restoring a group is adding its optgroup back plus one
+  line in `BV_CATEGORY_BY_GROUP`.
 - **Live warranty term** — picking a product shows what it actually carries
   (lifetime / 15-year / 10-year / 1-year), sourced from
   [bootz.com/warranty](https://bootz.com/warranty/). It also lands in the sheet

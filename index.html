@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Register Your Bootz Product</title>
-<meta name="description" content="Register your Bootz bathtub, shower base, wall kit or sink to put your warranty on file — and tell us how it went in." />
+<meta name="description" content="Register your Bootz shower base to put your warranty on file — and tell us how it went in." />
 <meta name="robots" content="noindex" />
 <meta name="theme-color" content="#002D4B" />
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
@@ -258,44 +258,16 @@
         <div class="row">
           <div class="field">
             <label for="productFamily">What did you install? <span class="req">*</span></label>
+            <!-- Shower bases only. Bathtubs, wall kits and sinks are the rest of
+                 the Bootz line and their warranty terms are still in WARRANTY
+                 below — restoring them is adding the optgroups back, plus a
+                 category ExternalId each in BV_CATEGORY_BY_GROUP. -->
             <select id="productFamily" name="productFamily" required>
               <option value="" disabled selected>Select&hellip;</option>
-              <optgroup label="Bathtubs">
-                <option>Aloha</option>
-                <option>Aloha Plus</option>
-                <option>Bootzcast</option>
-                <option>Maui</option>
-                <option>Maui Plus</option>
-                <option>Mauicast</option>
-                <option>Mauicast Plus</option>
-                <option>Honolulu</option>
-                <option>Kona</option>
-                <option>Cambridge</option>
-                <option>Americast tub</option>
-                <option>Freedom tub</option>
-                <option>Other bathtub</option>
-              </optgroup>
               <optgroup label="Shower bases">
                 <option>ShowerCast</option>
                 <option>Americast shower base</option>
                 <option>Other shower base</option>
-              </optgroup>
-              <optgroup label="Wall kits">
-                <option>NexTile</option>
-                <option>NexTile Pro</option>
-                <option>Freedom direct-to-stud walls</option>
-                <option>Passage glue-up walls</option>
-                <option>Aspirations glue-up walls</option>
-                <option>Standard wall kit</option>
-              </optgroup>
-              <optgroup label="Sinks">
-                <option>Azalea</option>
-                <option>Daffodil</option>
-                <option>Daisy</option>
-                <option>Garnet</option>
-                <option>Garnet 2</option>
-                <option>Laurel</option>
-                <option>Orchid</option>
               </optgroup>
             </select>
             <div class="err">Please choose what you installed.</div>
@@ -416,7 +388,11 @@
   'use strict';
   document.getElementById('yr').textContent = new Date().getFullYear();
 
-  /* ---- Warranty terms, per bootz.com/warranty ---- */
+  /* ---- Warranty terms, per bootz.com/warranty ----
+     Covers the whole Bootz line, not just the shower bases the form currently
+     offers. Kept complete on purpose: it's researched reference data, and
+     leaving it intact means restoring a product group to the dropdown needs no
+     change here. Entries for products not in the select are simply unreachable. */
   var WARRANTY = {
     'Aloha':'Limited lifetime warranty','Aloha Plus':'Limited lifetime warranty',
     'Bootzcast':'Limited lifetime warranty','Maui':'Limited lifetime warranty',
@@ -572,21 +548,34 @@
     environment: 'production',              // 'staging' while testing
     locale:      'en_US',
     campaignId:  'bootz_qr_registration',   // segments these reviews in BV reports
-    categoryId:  ''                         // optional; ignored when a family matches
+    categoryId:  'Shower_Base'              // fallback; ignored when a family matches
   };
+
+  /* Category ExternalId per product group, matching the optgroups in the
+     "What did you install?" select and read straight off the <optgroup label>,
+     so it stays in step with the dropdown. Shower bases are the only group the
+     form offers today; add a group here whenever one is added there, or its
+     registrations open the picker on the wrong category via the fallback. */
+  var BV_CATEGORY_BY_GROUP = {
+    'Shower bases': 'Shower_Base'
+  };
+
+  /* Which category the current selection implies. The placeholder option isn't
+     inside an optgroup, so an unanswered dropdown lands on the fallback. */
+  function bvCategoryFor(){
+    if(window.__bvQueryCategory != null) return window.__bvQueryCategory;   // debug override wins
+    var opt   = family.options[family.selectedIndex];
+    var group = (opt && opt.parentNode && opt.parentNode.tagName === 'OPTGROUP')
+                ? opt.parentNode.label : '';
+    return BV_CATEGORY_BY_GROUP[group] || BV.categoryId || '';
+  }
 
   /* Our product families → the ExternalId of any product in the matching BV
      product family, so once someone says what they installed the picker can
-     narrow to that family instead of the whole catalog. Fill these from the BV
-     product catalog; any left blank simply leave the picker where it is. */
+     narrow further than the category. Fill these from the BV product catalog;
+     any left blank fall back to the category above, which still works. */
   var BV_FAMILY = {
-    'Aloha':'', 'Aloha Plus':'', 'Bootzcast':'', 'Maui':'', 'Maui Plus':'',
-    'Mauicast':'', 'Mauicast Plus':'', 'Honolulu':'', 'Kona':'', 'Cambridge':'',
-    'Americast tub':'', 'Freedom tub':'', 'ShowerCast':'', 'Americast shower base':'',
-    'NexTile':'', 'NexTile Pro':'', 'Freedom direct-to-stud walls':'',
-    'Passage glue-up walls':'', 'Aspirations glue-up walls':'', 'Standard wall kit':'',
-    'Azalea':'', 'Daffodil':'', 'Daisy':'', 'Garnet':'', 'Garnet 2':'',
-    'Laurel':'', 'Orchid':''
+    'ShowerCast':'', 'Americast shower base':''
   };
 
   var bvEnabled   = !!BV.clientName;
@@ -726,7 +715,7 @@
 
   /* (Re)build the picker div. Bazaarvoice reads the data attributes when it
      renders, so changing scope means replacing the element, not mutating it. */
-  function bvRender(familyId){
+  function bvRender(familyId, categoryId){
     if(bvPoll){ clearInterval(bvPoll); bvPoll = null; }
     bvPicker.innerHTML = '';
 
@@ -736,12 +725,14 @@
     if(BV.campaignId) el.setAttribute('data-bv-campaign-id', BV.campaignId);
 
     // Never set both family and category — BV throws a console error if you do.
-    if(familyId)           el.setAttribute('data-bv-family-product-id', familyId);
-    else if(BV.categoryId) el.setAttribute('data-bv-category-id', BV.categoryId);
+    if(familyId)        el.setAttribute('data-bv-family-product-id', familyId);
+    else if(categoryId) el.setAttribute('data-bv-category-id', categoryId);
 
     bvPicker.appendChild(el);
-    bvScope = familyId || null;
-    bvLog('picker div injected — ' + el.outerHTML);
+    bvScope = familyId || categoryId || null;
+    bvLog('picker div injected (scope: ' +
+          (familyId ? 'family ' + familyId : categoryId ? 'category ' + categoryId : 'root, all products') +
+          ') — ' + el.outerHTML);
 
     // BV paints into our div asynchronously. Reveal the block the moment it
     // does; if nothing has appeared within 12s, treat it as a no-show.
@@ -772,11 +763,12 @@
       return m ? decodeURIComponent(m[1]) : null;
     };
     var qCat = bvQ('bvcategory'), qFam = bvQ('bvfamily');
-    if(qCat !== null){ BV.categoryId = qCat; bvLog('URL override: categoryId=' + (qCat || '(cleared)')); }
-    if(qFam !== null){ bvLog('URL override: familyProductId=' + qFam); }
+    if(qCat !== null) bvLog('URL override: categoryId=' + (qCat || '(cleared)'));
+    if(qFam !== null) bvLog('URL override: familyProductId=' + qFam);
     if(qCat !== null && qFam !== null)
       bvLog('WARNING: category and family are mutually exclusive — BV errors if both are set. Family wins below.');
-    window.__bvQueryFamily = qFam;
+    window.__bvQueryCategory = qCat;   // overrides the per-group mapping below
+    window.__bvQueryFamily   = qFam;
   }
 
   bvLog('config: clientName=' + (BV.clientName || '(blank — picker disabled)') +
@@ -794,7 +786,7 @@
 
   if(bvEnabled){
     bvLoadScript(bvGiveUp);
-    bvRender(window.__bvQueryFamily || BV_FAMILY[family.value] || '');
+    bvRender(window.__bvQueryFamily || BV_FAMILY[family.value] || '', bvCategoryFor());
 
     // Re-rendering throws away whatever Bazaarvoice currently has on screen, so
     // stop doing it the moment the customer touches the picker — losing a
@@ -802,11 +794,14 @@
     bvPicker.addEventListener('pointerdown', function(){ bvTouched = true; });
     bvPicker.addEventListener('focusin',     function(){ bvTouched = true; });
 
-    // Until then, saying what they installed narrows the picker to that family,
-    // if we have an ExternalId for it.
+    // Until then, saying what they installed narrows the picker — to the product
+    // family if we have an ExternalId for it, otherwise to that group's category.
     family.addEventListener('change', function(){
-      var familyId = BV_FAMILY[family.value] || '';
-      if(!bvTouched && familyId && familyId !== bvScope) bvRender(familyId);
+      if(bvTouched) return;
+      var familyId   = BV_FAMILY[family.value] || '';
+      var categoryId = bvCategoryFor();
+      var next = familyId || categoryId || null;
+      if(next && next !== bvScope) bvRender(familyId, categoryId);
     });
   }
 
