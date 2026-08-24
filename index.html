@@ -146,6 +146,15 @@
 
   .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 
+  /* ---------- Bazaarvoice site-hosted Product Picker ----------
+     Sits below the registration form on the first screen. Hidden until
+     Bazaarvoice actually paints something into it, so a blocked bv.js or an
+     unconfigured picker leaves no empty box behind. */
+  .bvblock{display:none;margin-top:26px;padding-top:24px;border-top:1px solid var(--line)}
+  .bvblock.show{display:block}
+  .bvblock h3{font-size:17px;color:var(--navy);margin-bottom:6px}
+  .bvblock .bvintro{font-size:14px;color:var(--grey);font-weight:300;margin-bottom:14px}
+
   /* ---------- Success ---------- */
   .done{display:none;text-align:center;padding:16px 4px 8px}
   .done .check{width:70px;height:70px;border-radius:50%;background:var(--cyan);color:var(--white);
@@ -363,6 +372,15 @@
         <p class="fineprint">Registering puts your Bootz limited warranty record on file. By submitting a review and photos you give Bootz permission to use them in marketing. We never sell your information.</p>
       </form>
 
+      <!-- Bazaarvoice site-hosted Product Picker. Deliberately a sibling of the
+           form, not a child: Bazaarvoice renders its own <form> in here and
+           nested forms are invalid HTML. -->
+      <section class="bvblock" id="bvBlock" aria-labelledby="bvHeading">
+        <h3 id="bvHeading">Want to post it publicly too?</h3>
+        <p class="bvintro">Pick your product below to write a review that shows up on the product page &mdash; it&rsquo;s separate from the registration above, so do both if you like.</p>
+        <div id="bvPicker"></div>
+      </section>
+
       <div class="done" id="done">
         <div class="check" aria-hidden="true">&#10003;</div>
         <h2>You're registered</h2>
@@ -529,6 +547,123 @@
     'Amazon':{url:'https://www.amazon.com/s?k=bootz+industries', name:'Amazon'}
   };
 
+  /* ---- Bazaarvoice site-hosted Product Picker -------------------------------
+     Renders under the registration form on the first screen, on page load, so
+     someone can post a public review straight from here instead of being sent
+     off to a retailer to start over. The confirmation screen keeps its own
+     retailer hand-off untouched.
+
+     Off until `clientName` is filled in — get the value from the Bazaarvoice
+     Portal (Site Manager), lowercase. Blanking it is the kill switch: the whole
+     block never appears and bv.js is never requested.
+
+     `siteId` is the deployment zone ("main_site" is the default). Point
+     `environment` at 'staging' to test against the BV staging catalog first.
+
+     Two prerequisites live outside this file:
+       1. Product Picker must be switched on in the BV Style Editor (V2). If the
+          option isn't there, BV Support has to enable it.
+       2. The BV product feed must map products to categories / product families,
+          or the picker renders an empty list.
+     ------------------------------------------------------------------------- */
+  var BV = {
+    clientName:  'bootz',                   // blank disables the whole hand-off
+    siteId:      'main_site',
+    environment: 'production',              // 'staging' while testing
+    locale:      'en_US',
+    campaignId:  'bootz_qr_registration',   // segments these reviews in BV reports
+    categoryId:  ''                         // optional; ignored when a family matches
+  };
+
+  /* Our product families → the ExternalId of any product in the matching BV
+     product family, so once someone says what they installed the picker can
+     narrow to that family instead of the whole catalog. Fill these from the BV
+     product catalog; any left blank simply leave the picker where it is. */
+  var BV_FAMILY = {
+    'Aloha':'', 'Aloha Plus':'', 'Bootzcast':'', 'Maui':'', 'Maui Plus':'',
+    'Mauicast':'', 'Mauicast Plus':'', 'Honolulu':'', 'Kona':'', 'Cambridge':'',
+    'Americast tub':'', 'Freedom tub':'', 'ShowerCast':'', 'Americast shower base':'',
+    'NexTile':'', 'NexTile Pro':'', 'Freedom direct-to-stud walls':'',
+    'Passage glue-up walls':'', 'Aspirations glue-up walls':'', 'Standard wall kit':'',
+    'Azalea':'', 'Daffodil':'', 'Daisy':'', 'Garnet':'', 'Garnet 2':'',
+    'Laurel':'', 'Orchid':''
+  };
+
+  var bvEnabled   = !!BV.clientName;
+  var bvBlock     = document.getElementById('bvBlock');
+  var bvPicker    = document.getElementById('bvPicker');
+  var bvScope     = null;   // ExternalId currently driving the picker, or null for root
+  var bvPoll      = null;
+  var bvTouched   = false;  // customer has started using the picker — stop re-rendering
+
+  function bvLoadScript(onFail){
+    var s = document.createElement('script');
+    s.async = true;
+    s.onerror = onFail;
+    s.src = 'https://apps.bazaarvoice.com/deployments/' + BV.clientName + '/' + BV.siteId +
+            '/' + BV.environment + '/' + BV.locale + '/bv.js';
+    document.head.appendChild(s);
+  }
+
+  /* Nothing rendered — bv.js blocked, Product Picker not enabled in the Style
+     Editor, or no category/family mappings in the feed. Take the block away
+     rather than leave an empty panel under the form. */
+  function bvGiveUp(){
+    if(bvPoll){ clearInterval(bvPoll); bvPoll = null; }
+    bvBlock.classList.remove('show');
+    bvPicker.innerHTML = '';
+  }
+
+  /* (Re)build the picker div. Bazaarvoice reads the data attributes when it
+     renders, so changing scope means replacing the element, not mutating it. */
+  function bvRender(familyId){
+    if(bvPoll){ clearInterval(bvPoll); bvPoll = null; }
+    bvPicker.innerHTML = '';
+
+    var el = document.createElement('div');
+    el.setAttribute('data-bv-show', 'product_picker');
+    el.setAttribute('data-bv-inline', 'true');   // in-page, not a lightbox — kinder on a phone
+    if(BV.campaignId) el.setAttribute('data-bv-campaign-id', BV.campaignId);
+
+    // Never set both family and category — BV throws a console error if you do.
+    if(familyId)           el.setAttribute('data-bv-family-product-id', familyId);
+    else if(BV.categoryId) el.setAttribute('data-bv-category-id', BV.categoryId);
+
+    bvPicker.appendChild(el);
+    bvScope = familyId || null;
+
+    // BV paints into our div asynchronously. Reveal the block the moment it
+    // does; if nothing has appeared within 12s, treat it as a no-show.
+    var waited = 0;
+    bvPoll = setInterval(function(){
+      waited += 400;
+      if(el.children.length || el.textContent.trim()){
+        clearInterval(bvPoll); bvPoll = null;
+        bvBlock.classList.add('show');
+      } else if(waited >= 12000){
+        bvGiveUp();
+      }
+    }, 400);
+  }
+
+  if(bvEnabled){
+    bvLoadScript(bvGiveUp);
+    bvRender(BV_FAMILY[family.value] || '');
+
+    // Re-rendering throws away whatever Bazaarvoice currently has on screen, so
+    // stop doing it the moment the customer touches the picker — losing a
+    // half-written review to a dropdown change would be unforgivable.
+    bvPicker.addEventListener('pointerdown', function(){ bvTouched = true; });
+    bvPicker.addEventListener('focusin',     function(){ bvTouched = true; });
+
+    // Until then, saying what they installed narrows the picker to that family,
+    // if we have an ExternalId for it.
+    family.addEventListener('change', function(){
+      var familyId = BV_FAMILY[family.value] || '';
+      if(!bvTouched && familyId && familyId !== bvScope) bvRender(familyId);
+    });
+  }
+
   /* ---- Submit ---- */
   var form = document.getElementById('regForm');
   var btn = document.getElementById('submitBtn');
@@ -598,6 +733,9 @@
 
         document.getElementById('regForm').style.display='none';
         document.getElementById('benefits').style.display='none';
+        // The picker belongs to the first screen only — the confirmation screen
+        // keeps its own retailer hand-off.
+        bvGiveUp();
         document.getElementById('done').style.display='block';
         document.getElementById('card').scrollIntoView({behavior:'smooth',block:'start'});
       })
