@@ -82,15 +82,12 @@ Two levers, in priority order — never both at once, which Bazaarvoice rejects.
 
 | Group | Category `ExternalId` |
 | --- | --- |
-| Bathtubs | *not yet known* |
 | Shower bases | `Shower_Base` |
-| Wall kits | *not yet known* |
-| Sinks | *not yet known* |
 
-Groups with no ID fall back to `BV.categoryId` (currently `Shower_Base`), so
-until the other three are filled in **someone registering a sink or a tub opens
-the picker on shower bases**. Filling them in is the fix; BV's picker does show
-a breadcrumb dropdown to navigate out in the meantime.
+Shower bases are the only group the form offers, so every registration maps to a
+known category. **If a group is added back to the dropdown, add it here too** —
+anything unmapped falls through to `BV.categoryId` and would open the picker on
+shower bases.
 
 **Family.** `BV_FAMILY` maps each Bootz product family to the `ExternalId` of any product in
 the matching Bazaarvoice product family. Every entry is currently **blank**, so
@@ -176,10 +173,14 @@ faithful fallback everywhere else.
 
 ## What this does that the DreamLine / American Standard version didn't
 
-- **Real product picker** — the actual Bootz line (Aloha, Bootzcast, Maui,
-  Mauicast, Kona, Honolulu, Cambridge, Freedom, ShowerCast, NexTile, the
-  glue-up wall systems, and all seven sinks), grouped by category. No more
-  free-text product names to clean up later.
+- **Real product picker** — named Bootz products rather than a free-text box, so
+  there are no product names to clean up later. **Currently shower bases only**
+  (ShowerCast, Americast shower base, Other shower base) to match the one
+  category mapped in the Bazaarvoice catalogue — see
+  [Scoping the picker](#scoping-the-picker). The bathtub, wall kit and sink
+  optgroups were removed from `index.html`; their warranty terms are still in
+  the `WARRANTY` map, so restoring a group is adding its optgroup back plus one
+  line in `BV_CATEGORY_BY_GROUP`.
 - **Live warranty term** — picking a product shows what it actually carries
   (lifetime / 15-year / 10-year / 1-year), sourced from
   [bootz.com/warranty](https://bootz.com/warranty/). It also lands in the sheet
