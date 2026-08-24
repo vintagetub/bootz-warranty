@@ -616,6 +616,57 @@
     bvBlock.classList.add('show');       // keep the panel reachable even on failure
   }
 
+  /* Bazaarvoice reports its own problems to the console — "product picker is not
+     enabled", catalog errors, and so on. In debug mode tee those into the panel
+     so they can be copied out of a phone browser with no devtools. */
+  if(bvDebug && window.console){
+    ['error','warn'].forEach(function(level){
+      var original = console[level];
+      console[level] = function(){
+        try{
+          var text = Array.prototype.map.call(arguments, function(a){
+            return (a && a.message) ? a.message : String(a);
+          }).join(' ');
+          if(/\bbv\b|bazaarvoice|picker/i.test(text)) bvLog('console.' + level + ': ' + text);
+        }catch(e){}
+        return original.apply(console, arguments);
+      };
+    });
+  }
+
+  /* What did bv.js actually put on the page? Separates "the BV framework never
+     initialised" from "it initialised but has no Product Picker to render". */
+  function bvProbe(){
+    if(!bvDebug) return;
+    var globals = [];
+    try{ for(var k in window){ if(/^\$?BV/.test(k)) globals.push(k); } }catch(e){}
+    bvLog('BV globals present: ' + (globals.join(', ') || 'NONE — bv.js loaded but initialised nothing'));
+    var api = window.BV || window.$BV;
+    bvLog('BV.ui is ' + (api && typeof api.ui === 'function' ? 'available' : 'MISSING'));
+  }
+
+  /* The docs give a second, imperative way in: BV.ui('rr','submit_generic').
+     If the declarative div draws nothing but this does, the problem is the
+     div-scanning path; if neither draws, the picker isn't deployed to this zone
+     or the catalog has nothing mapped. Debug only — it can open a lightbox, and
+     that is not something to spring on a customer. */
+  function bvTryImperative(){
+    if(!bvDebug) return;
+    var api = window.BV || window.$BV;
+    if(!api || typeof api.ui !== 'function'){ bvLog('no BV.ui() to try'); return; }
+    var opts = { inline: true };
+    if(BV.campaignId) opts.campaignId = BV.campaignId;
+    bvLog('trying the imperative path: BV.ui("rr","submit_generic",' + JSON.stringify(opts) + ')');
+    try{ api.ui('rr', 'submit_generic', opts); }
+    catch(e){ bvLog('BV.ui() threw: ' + (e && e.message)); return; }
+    setTimeout(function(){
+      var drew = bvPicker.textContent.trim() ||
+                 document.querySelector('[class*="bv-"],[id*="BVSubmission"],[id*="bv-mboxzone"]');
+      bvLog('4s after BV.ui(): ' + (drew ? 'SOMETHING RENDERED — the declarative div is the problem'
+                                         : 'still nothing — the picker is not deployed to this zone, or nothing is mapped in the catalog'));
+    }, 4000);
+  }
+
   function bvLoadScript(onFail){
     var s = document.createElement('script');
     s.async = true;
@@ -632,7 +683,9 @@
 
   function bvTeardown(){
     if(bvPoll){ clearInterval(bvPoll); bvPoll = null; }
-    bvPicker.innerHTML = '';
+    // In debug mode leave the div alone — the probes below render into it, and
+    // clearing it would throw away the evidence we came for.
+    if(!bvDebug) bvPicker.innerHTML = '';
   }
 
   /* Takes the whole ask off the page — used when the first screen gives way to
@@ -703,9 +756,27 @@
         bvLog('bv.js is on the page but rendered nothing in 12s. Usual causes: Product ' +
               'Picker not enabled in the BV Style Editor, or no category/family mappings ' +
               'in the product feed.');
+        bvProbe();
+        bvTryImperative();
         bvGiveUp();
       }
     }, 400);
+  }
+
+  /* In debug mode, ?bvcategory=X / ?bvfamily=X override the config for one page
+     load, so category and family ExternalIds can be tried against the live
+     catalogue without a redeploy between each guess. */
+  if(bvDebug){
+    var bvQ = function(name){
+      var m = new RegExp('[?&]' + name + '=([^&#]*)').exec(location.search);
+      return m ? decodeURIComponent(m[1]) : null;
+    };
+    var qCat = bvQ('bvcategory'), qFam = bvQ('bvfamily');
+    if(qCat !== null){ BV.categoryId = qCat; bvLog('URL override: categoryId=' + (qCat || '(cleared)')); }
+    if(qFam !== null){ bvLog('URL override: familyProductId=' + qFam); }
+    if(qCat !== null && qFam !== null)
+      bvLog('WARNING: category and family are mutually exclusive — BV errors if both are set. Family wins below.');
+    window.__bvQueryFamily = qFam;
   }
 
   bvLog('config: clientName=' + (BV.clientName || '(blank — picker disabled)') +
@@ -723,7 +794,7 @@
 
   if(bvEnabled){
     bvLoadScript(bvGiveUp);
-    bvRender(BV_FAMILY[family.value] || '');
+    bvRender(window.__bvQueryFamily || BV_FAMILY[family.value] || '');
 
     // Re-rendering throws away whatever Bazaarvoice currently has on screen, so
     // stop doing it the moment the customer touches the picker — losing a
