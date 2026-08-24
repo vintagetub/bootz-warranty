@@ -572,8 +572,32 @@
     environment: 'production',              // 'staging' while testing
     locale:      'en_US',
     campaignId:  'bootz_qr_registration',   // segments these reviews in BV reports
-    categoryId:  ''                         // optional; ignored when a family matches
+    categoryId:  'Shower_Base'              // fallback; ignored when a family matches
   };
+
+  /* Category ExternalId per product group, matching the optgroups in the
+     "What did you install?" select — so a sink registration doesn't open the
+     picker on shower bases. Read straight off the <optgroup label>, which keeps
+     this in step with the dropdown instead of restating all 27 products.
+
+     Only Shower_Base is confirmed from the BV product catalogue so far. Groups
+     left blank fall back to BV.categoryId above. */
+  var BV_CATEGORY_BY_GROUP = {
+    'Bathtubs':     '',                     // TODO: ExternalId from the BV catalogue
+    'Shower bases': 'Shower_Base',
+    'Wall kits':    '',                     // TODO
+    'Sinks':        ''                      // TODO
+  };
+
+  /* Which category the current selection implies. The placeholder option isn't
+     inside an optgroup, so an unanswered dropdown lands on the fallback. */
+  function bvCategoryFor(){
+    if(window.__bvQueryCategory != null) return window.__bvQueryCategory;   // debug override wins
+    var opt   = family.options[family.selectedIndex];
+    var group = (opt && opt.parentNode && opt.parentNode.tagName === 'OPTGROUP')
+                ? opt.parentNode.label : '';
+    return BV_CATEGORY_BY_GROUP[group] || BV.categoryId || '';
+  }
 
   /* Our product families → the ExternalId of any product in the matching BV
      product family, so once someone says what they installed the picker can
@@ -726,7 +750,7 @@
 
   /* (Re)build the picker div. Bazaarvoice reads the data attributes when it
      renders, so changing scope means replacing the element, not mutating it. */
-  function bvRender(familyId){
+  function bvRender(familyId, categoryId){
     if(bvPoll){ clearInterval(bvPoll); bvPoll = null; }
     bvPicker.innerHTML = '';
 
@@ -736,12 +760,14 @@
     if(BV.campaignId) el.setAttribute('data-bv-campaign-id', BV.campaignId);
 
     // Never set both family and category — BV throws a console error if you do.
-    if(familyId)           el.setAttribute('data-bv-family-product-id', familyId);
-    else if(BV.categoryId) el.setAttribute('data-bv-category-id', BV.categoryId);
+    if(familyId)        el.setAttribute('data-bv-family-product-id', familyId);
+    else if(categoryId) el.setAttribute('data-bv-category-id', categoryId);
 
     bvPicker.appendChild(el);
-    bvScope = familyId || null;
-    bvLog('picker div injected — ' + el.outerHTML);
+    bvScope = familyId || categoryId || null;
+    bvLog('picker div injected (scope: ' +
+          (familyId ? 'family ' + familyId : categoryId ? 'category ' + categoryId : 'root, all products') +
+          ') — ' + el.outerHTML);
 
     // BV paints into our div asynchronously. Reveal the block the moment it
     // does; if nothing has appeared within 12s, treat it as a no-show.
@@ -772,11 +798,12 @@
       return m ? decodeURIComponent(m[1]) : null;
     };
     var qCat = bvQ('bvcategory'), qFam = bvQ('bvfamily');
-    if(qCat !== null){ BV.categoryId = qCat; bvLog('URL override: categoryId=' + (qCat || '(cleared)')); }
-    if(qFam !== null){ bvLog('URL override: familyProductId=' + qFam); }
+    if(qCat !== null) bvLog('URL override: categoryId=' + (qCat || '(cleared)'));
+    if(qFam !== null) bvLog('URL override: familyProductId=' + qFam);
     if(qCat !== null && qFam !== null)
       bvLog('WARNING: category and family are mutually exclusive — BV errors if both are set. Family wins below.');
-    window.__bvQueryFamily = qFam;
+    window.__bvQueryCategory = qCat;   // overrides the per-group mapping below
+    window.__bvQueryFamily   = qFam;
   }
 
   bvLog('config: clientName=' + (BV.clientName || '(blank — picker disabled)') +
@@ -794,7 +821,7 @@
 
   if(bvEnabled){
     bvLoadScript(bvGiveUp);
-    bvRender(window.__bvQueryFamily || BV_FAMILY[family.value] || '');
+    bvRender(window.__bvQueryFamily || BV_FAMILY[family.value] || '', bvCategoryFor());
 
     // Re-rendering throws away whatever Bazaarvoice currently has on screen, so
     // stop doing it the moment the customer touches the picker — losing a
@@ -802,11 +829,14 @@
     bvPicker.addEventListener('pointerdown', function(){ bvTouched = true; });
     bvPicker.addEventListener('focusin',     function(){ bvTouched = true; });
 
-    // Until then, saying what they installed narrows the picker to that family,
-    // if we have an ExternalId for it.
+    // Until then, saying what they installed narrows the picker — to the product
+    // family if we have an ExternalId for it, otherwise to that group's category.
     family.addEventListener('change', function(){
-      var familyId = BV_FAMILY[family.value] || '';
-      if(!bvTouched && familyId && familyId !== bvScope) bvRender(familyId);
+      if(bvTouched) return;
+      var familyId   = BV_FAMILY[family.value] || '';
+      var categoryId = bvCategoryFor();
+      var next = familyId || categoryId || null;
+      if(next && next !== bvScope) bvRender(familyId, categoryId);
     });
   }
 

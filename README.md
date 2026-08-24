@@ -72,7 +72,27 @@ come from?" and appearing when they answer it. Same fallback when `clientName`
 is blank. If they bought it somewhere we can't link to, the block stays hidden;
 there is never an empty panel sitting under the form.
 
-`BV_FAMILY` maps each Bootz product family to the `ExternalId` of any product in
+### Scoping the picker
+
+Two levers, in priority order — never both at once, which Bazaarvoice rejects.
+
+**Category, per product group.** `BV_CATEGORY_BY_GROUP` maps the optgroups in
+"What did you install?" to category `ExternalId`s, read straight off the
+`<optgroup label>` so it stays in step with the dropdown:
+
+| Group | Category `ExternalId` |
+| --- | --- |
+| Bathtubs | *not yet known* |
+| Shower bases | `Shower_Base` |
+| Wall kits | *not yet known* |
+| Sinks | *not yet known* |
+
+Groups with no ID fall back to `BV.categoryId` (currently `Shower_Base`), so
+until the other three are filled in **someone registering a sink or a tub opens
+the picker on shower bases**. Filling them in is the fix; BV's picker does show
+a breadcrumb dropdown to navigate out in the meantime.
+
+**Family.** `BV_FAMILY` maps each Bootz product family to the `ExternalId` of any product in
 the matching Bazaarvoice product family. Every entry is currently **blank**, so
 the picker opens on the root category. Fill an entry in and selecting that
 product re-renders the picker scoped to that family
