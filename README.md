@@ -28,6 +28,87 @@ Steps 3 and 4 are best-effort: a mail failure is logged but never loses a
 registration. Every step is skipped cleanly if its env vars are missing, so the
 page keeps working while things are being wired up.
 
+## Bazaarvoice site-hosted Product Picker
+
+Below the registration form, on the first screen, the page renders Bazaarvoice's
+[site-hosted Product Picker](https://docs.bazaarvoice.com/articles/#!ratings-reviews/generic_review_submission/a/h2_1929406595)
+so someone can post a real public review from here instead of being sent off to
+a retailer to start over. It loads with the page, not behind a button.
+
+**The public-review ask lives on the first screen only.** The confirmation
+screen carries no review invitation at all any more — it is the registration
+number, the email status and the support line, nothing else. Asking on both
+screens meant asking the same person twice.
+
+Configured in one block near the top of the script in `index.html`:
+
+```js
+var BV = {
+  clientName:  'bootz',                   // blank disables the whole hand-off
+  siteId:      'main_site',               // deployment zone
+  environment: 'production',              // 'staging' while testing
+  locale:      'en_US',
+  campaignId:  'bootz_qr_registration',   // segments these reviews in BV reports
+  categoryId:  ''                         // optional; ignored when a family matches
+};
+```
+
+Blanking `clientName` is the kill switch: the block never appears and `bv.js` is
+never requested. Everything else on the page is unaffected.
+
+**Two prerequisites live outside this repo and are still unverified:**
+
+1. **Product Picker must be switched on** in the Bazaarvoice Style Editor (V2).
+   If the option isn't there, BV Support has to enable it.
+2. **The product feed must map products to categories or product families**, or
+   the picker renders an empty list. See
+   [product catalog](https://docs.bazaarvoice.com/articles/ratings-reviews/product_catalog/a/Categori).
+
+Because either could be missing on a live page, the block is **hidden until
+Bazaarvoice actually paints into it**. If `bv.js` fails to load, or nothing has
+rendered within 12 seconds, the empty picker is cleared out and the block falls
+back to a **retailer link — still on the first screen**, keyed off "Where did it
+come from?" and appearing when they answer it. Same fallback when `clientName`
+is blank. If they bought it somewhere we can't link to, the block stays hidden;
+there is never an empty panel sitting under the form.
+
+`BV_FAMILY` maps each Bootz product family to the `ExternalId` of any product in
+the matching Bazaarvoice product family. Every entry is currently **blank**, so
+the picker opens on the root category. Fill an entry in and selecting that
+product re-renders the picker scoped to that family
+(`data-bv-family-product-id`) — but only until the customer touches the picker,
+after which it is left alone rather than re-rendered out from under a
+half-written review. Family and category are never both set — BV throws a
+console error if you do that.
+
+### Why isn't the picker showing?
+
+Add **`?bvdebug=1`** to the URL. The block forces itself visible and prints what
+happened — the resolved config, the exact `bv.js` URL requested, whether it
+loaded, the picker div with its attributes, and which of the failure paths was
+taken. It also goes to the browser console. Without the flag nothing about it is
+visible to customers.
+
+The three answers it distinguishes:
+
+| Panel says | Means |
+| --- | --- |
+| `bv.js FAILED to load` | Blocked (ad blocker, CSP, network) or a wrong `clientName` / `siteId` / `environment` / `locale` — check the URL it printed |
+| `loaded OK` then `rendered nothing in 12s` | Bazaarvoice is on the page but has nothing to draw: **Product Picker isn't enabled in the Style Editor**, or the feed has no category/family mappings |
+| `rendered into the picker after Nms` | Working |
+
+If the panel doesn't appear at all, the deployed build predates this change —
+check the commit the deployment was built from.
+
+> **Not yet seen working.** Outbound access to `apps.bazaarvoice.com` is blocked
+> from the development sandbox (the proxy returns 403 on the CONNECT), so the
+> picker listing real products has never been observed. What *has* been verified
+> in Chromium is the wiring around it: render-on-load, the campaign ID and
+> inline attribute reaching the picker div, family re-scoping, the kill switch,
+> `bv.js` blocked, `bv.js` loading but rendering nothing, and the picker leaving
+> with the first screen on submit. **The first real test has to happen on the
+> deployed page.**
+
 ## Brand spec (Bootz 2022 Brand Guidelines)
 
 | | |
@@ -63,11 +144,12 @@ faithful fallback everywhere else.
 - **Low-rating alert** — 3 stars or below emails the internal list with the
   review, the photos and a one-click reply-to-customer link, so someone can
   intervene before it becomes a public 1-star.
-- **No review gating** — the public-review hand-off is offered to *everyone*,
-  whatever they rated it. On a low rating the "let us make it right" message
-  moves above it, but the invitation is never withheld. Selectively inviting
-  only happy customers is review gating; retailer policies and the FTC's
-  consumer-review rule both take a dim view of it.
+- **No review gating** — the public-review ask sits on the first screen, before
+  anyone has rated anything, so it reaches *everyone* by construction. A low
+  rating adds a "let us make it right" message to the confirmation screen but
+  never withholds the invitation. Selectively inviting only happy customers is
+  review gating; retailer policies and the FTC's consumer-review rule both take
+  a dim view of it.
 - **Marketing opt-in** — an explicit, unchecked consent box, captured as its own
   column so the list is clean enough to hand to Klaviyo.
 
