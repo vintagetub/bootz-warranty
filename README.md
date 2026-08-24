@@ -33,9 +33,12 @@ page keeps working while things are being wired up.
 Below the registration form, on the first screen, the page renders Bazaarvoice's
 [site-hosted Product Picker](https://docs.bazaarvoice.com/articles/#!ratings-reviews/generic_review_submission/a/h2_1929406595)
 so someone can post a real public review from here instead of being sent off to
-a retailer to start over. It loads with the page, not behind a button — the
-confirmation screen's retailer hand-off (Home Depot / Lowe's / Menards / Amazon)
-is untouched and stays where it is.
+a retailer to start over. It loads with the page, not behind a button.
+
+**The public-review ask lives on the first screen only.** The confirmation
+screen carries no review invitation at all any more — it is the registration
+number, the email status and the support line, nothing else. Asking on both
+screens meant asking the same person twice.
 
 Configured in one block near the top of the script in `index.html`:
 
@@ -63,8 +66,11 @@ never requested. Everything else on the page is unaffected.
 
 Because either could be missing on a live page, the block is **hidden until
 Bazaarvoice actually paints into it**. If `bv.js` fails to load, or nothing has
-rendered within 12 seconds, the whole section is removed — there is never an
-empty panel sitting under the form.
+rendered within 12 seconds, the empty picker is cleared out and the block falls
+back to a **retailer link — still on the first screen**, keyed off "Where did it
+come from?" and appearing when they answer it. Same fallback when `clientName`
+is blank. If they bought it somewhere we can't link to, the block stays hidden;
+there is never an empty panel sitting under the form.
 
 `BV_FAMILY` maps each Bootz product family to the `ExternalId` of any product in
 the matching Bazaarvoice product family. Every entry is currently **blank**, so
@@ -119,11 +125,12 @@ faithful fallback everywhere else.
 - **Low-rating alert** — 3 stars or below emails the internal list with the
   review, the photos and a one-click reply-to-customer link, so someone can
   intervene before it becomes a public 1-star.
-- **No review gating** — the public-review hand-off is offered to *everyone*,
-  whatever they rated it. On a low rating the "let us make it right" message
-  moves above it, but the invitation is never withheld. Selectively inviting
-  only happy customers is review gating; retailer policies and the FTC's
-  consumer-review rule both take a dim view of it.
+- **No review gating** — the public-review ask sits on the first screen, before
+  anyone has rated anything, so it reaches *everyone* by construction. A low
+  rating adds a "let us make it right" message to the confirmation screen but
+  never withholds the invitation. Selectively inviting only happy customers is
+  review gating; retailer policies and the FTC's consumer-review rule both take
+  a dim view of it.
 - **Marketing opt-in** — an explicit, unchecked consent box, captured as its own
   column so the list is clean enough to hand to Klaviyo.
 
