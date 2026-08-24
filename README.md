@@ -140,11 +140,26 @@ catalogue without a redeploy between guesses:
 a catalogue defines no categories of its own — worth trying first.) The two are
 mutually exclusive; supplying both warns and uses the family.
 
-**Status as of the first live test (`bootz-warranty-phi.vercel.app`):** `bv.js`
-loaded OK in 118 ms, so `clientName` / `siteId` / `environment` / `locale` are
-all correct and the deployment zone resolves. The picker div was in the DOM
-before bv.js executed. Nothing rendered in 12 s. That puts the remaining fault
-entirely on the Bazaarvoice configuration — see the two prerequisites above.
+**Status as of the live tests on `bootz-warranty-phi.vercel.app`:**
+
+- `bv.js` loads OK (118 ms, then 448 ms with `Shower_Base` set), so
+  `clientName` / `siteId` / `environment` / `locale` are correct and the
+  deployment zone resolves.
+- The picker div is in the DOM before bv.js executes, carrying
+  `data-bv-category-id="Shower_Base"`.
+- Nothing renders in 12 s.
+- **`window.BV` exists but `BV.ui` is missing.**
+
+That last point is the diagnosis. `bv.js` is built per deployment zone and
+contains the apps deployed to it; `BV.ui` is the Ratings & Reviews entry point.
+Present-but-empty `BV` means the framework shipped with **no R&R submission
+deployed to `main_site` production** — which is why neither the declarative
+`data-bv-show` div nor the imperative path draws anything.
+
+The catalogue question is moot until that is fixed: with no Product Picker in
+the bundle there is nothing to render a category into, however well
+`Shower_Base` is mapped. **This is a Bazaarvoice-side deployment fix, not a code
+one.**
 
 > **Not yet seen working.** Outbound access to `apps.bazaarvoice.com` is blocked
 > from the development sandbox (the proxy returns 403 on the CONNECT), so the

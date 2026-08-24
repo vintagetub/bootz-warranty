@@ -625,14 +625,39 @@
 
   /* What did bv.js actually put on the page? Separates "the BV framework never
      initialised" from "it initialised but has no Product Picker to render". */
+  /* What's actually inside window.BV? A populated API means the apps deployed
+     to this zone are present; a bare stub means bv.js is the framework only,
+     with no Ratings & Reviews submission deployed for it to expose. */
+  function bvDescribeBV(when){
+    if(!bvDebug) return;
+    var api = window.BV;
+    if(!api){ bvLog(when + ': window.BV is undefined'); return; }
+    var keys = [];
+    try{ keys = Object.keys(api); }catch(e){}
+    bvLog(when + ': BV exposes ' + (keys.length
+      ? keys.length + ' key(s) — ' + keys.join(', ')
+      : 'NO enumerable keys — a bare stub, no apps deployed to this zone'));
+  }
+
   function bvProbe(){
     if(!bvDebug) return;
     var globals = [];
     try{ for(var k in window){ if(/^\$?BV/.test(k)) globals.push(k); } }catch(e){}
     bvLog('BV globals present: ' + (globals.join(', ') || 'NONE — bv.js loaded but initialised nothing'));
+    bvDescribeBV('at 12s');
     var api = window.BV || window.$BV;
     bvLog('BV.ui is ' + (api && typeof api.ui === 'function' ? 'available' : 'MISSING'));
   }
+
+  /* BV.ui missing at 12s could mean "not deployed" or "still initialising".
+     Look again well past any plausible load time to tell those apart. */
+  if(bvDebug) setTimeout(function(){
+    bvDescribeBV('at 30s');
+    var api = window.BV || window.$BV;
+    bvLog('at 30s: BV.ui is ' + (api && typeof api.ui === 'function'
+      ? 'NOW AVAILABLE — it initialises late and the 12s window is too short'
+      : 'still missing — not a timing problem'));
+  }, 30000);
 
   /* The docs give a second, imperative way in: BV.ui('rr','submit_generic').
      If the declarative div draws nothing but this does, the problem is the
@@ -661,7 +686,7 @@
     s.async = true;
     s.src = 'https://apps.bazaarvoice.com/deployments/' + BV.clientName + '/' + BV.siteId +
             '/' + BV.environment + '/' + BV.locale + '/bv.js';
-    s.onload  = function(){ bvLog('bv.js loaded OK'); };
+    s.onload  = function(){ bvLog('bv.js loaded OK'); bvDescribeBV('on load'); };
     s.onerror = function(){
       bvLog('bv.js FAILED to load — blocked, offline, or wrong clientName/siteId/environment/locale');
       onFail();
