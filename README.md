@@ -81,6 +81,25 @@ after which it is left alone rather than re-rendered out from under a
 half-written review. Family and category are never both set — BV throws a
 console error if you do that.
 
+### Why isn't the picker showing?
+
+Add **`?bvdebug=1`** to the URL. The block forces itself visible and prints what
+happened — the resolved config, the exact `bv.js` URL requested, whether it
+loaded, the picker div with its attributes, and which of the failure paths was
+taken. It also goes to the browser console. Without the flag nothing about it is
+visible to customers.
+
+The three answers it distinguishes:
+
+| Panel says | Means |
+| --- | --- |
+| `bv.js FAILED to load` | Blocked (ad blocker, CSP, network) or a wrong `clientName` / `siteId` / `environment` / `locale` — check the URL it printed |
+| `loaded OK` then `rendered nothing in 12s` | Bazaarvoice is on the page but has nothing to draw: **Product Picker isn't enabled in the Style Editor**, or the feed has no category/family mappings |
+| `rendered into the picker after Nms` | Working |
+
+If the panel doesn't appear at all, the deployed build predates this change —
+check the commit the deployment was built from.
+
 > **Not yet seen working.** Outbound access to `apps.bazaarvoice.com` is blocked
 > from the development sandbox (the proxy returns 403 on the CONNECT), so the
 > picker listing real products has never been observed. What *has* been verified

@@ -154,6 +154,10 @@
   .bvblock.show{display:block}
   .bvblock h3{font-size:17px;color:var(--navy);margin-bottom:6px}
   .bvblock .bvintro{font-size:14px;color:var(--grey);font-weight:300;margin-bottom:14px}
+  /* Diagnostics, only with ?bvdebug=1 on the URL. */
+  .bvdebug{margin-top:14px;background:#0F1B22;color:#C9E7EA;border-radius:8px;padding:12px 13px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11.5px;line-height:1.55;
+    white-space:pre-wrap;word-break:break-all;overflow-x:auto}
 
   /* ---------- Success ---------- */
   .done{display:none;text-align:center;padding:16px 4px 8px}
@@ -379,6 +383,8 @@
         <!-- Shown only if the picker never renders, so the public-review ask
              still has somewhere to go without moving to the confirmation screen. -->
         <a class="btn-out" id="bvRetailer" href="#" target="_blank" rel="noopener" style="display:none">Leave a review</a>
+        <!-- Only ever shown with ?bvdebug=1 on the URL. -->
+        <pre class="bvdebug" id="bvDebug" style="display:none"></pre>
       </section>
 
       <div class="done" id="done">
@@ -594,12 +600,33 @@
   var bvTouched   = false;  // customer has started using the picker — stop re-rendering
   var bvFailed    = false;  // no picker to be had — fall back to the retailer link
 
+  /* Add ?bvdebug=1 to the URL to see what actually happened. Without it the
+     block simply hides when Bazaarvoice doesn't render, which is right for
+     customers and useless for whoever is trying to work out why. */
+  var bvDebug = /(^|[?&])bvdebug=1(&|$)/.test(location.search);
+  var bvT0    = (window.performance && performance.now) ? performance.now() : 0;
+  function bvLog(msg){
+    if(!bvDebug) return;
+    var ms = ((window.performance && performance.now ? performance.now() : 0) - bvT0).toFixed(0);
+    var line = '[bv +' + ms + 'ms] ' + msg;
+    if(window.console && console.log) console.log(line);
+    var out = document.getElementById('bvDebug');
+    out.style.display = 'block';
+    out.textContent += line + '\n';
+    bvBlock.classList.add('show');       // keep the panel reachable even on failure
+  }
+
   function bvLoadScript(onFail){
     var s = document.createElement('script');
     s.async = true;
-    s.onerror = onFail;
     s.src = 'https://apps.bazaarvoice.com/deployments/' + BV.clientName + '/' + BV.siteId +
             '/' + BV.environment + '/' + BV.locale + '/bv.js';
+    s.onload  = function(){ bvLog('bv.js loaded OK'); };
+    s.onerror = function(){
+      bvLog('bv.js FAILED to load — blocked, offline, or wrong clientName/siteId/environment/locale');
+      onFail();
+    };
+    bvLog('requesting ' + s.src);
     document.head.appendChild(s);
   }
 
@@ -629,7 +656,13 @@
      isn't a retailer we can link to. */
   function bvShowRetailer(){
     var link = REVIEW_LINKS[bvBought.value];
-    if(!link){ bvBlock.classList.remove('show'); return; }
+    if(!link){
+      bvLog('fallback: no linkable retailer chosen yet ("Where did it come from?" = ' +
+            (bvBought.value || 'unset') + ') — block hidden');
+      if(!bvDebug) bvBlock.classList.remove('show');
+      return;
+    }
+    bvLog('fallback: showing retailer link — ' + link.name);
     bvRetailer.href = link.url;
     bvRetailer.textContent = 'Review it on ' + link.name;
     bvRetailer.style.display = 'block';
@@ -655,6 +688,7 @@
 
     bvPicker.appendChild(el);
     bvScope = familyId || null;
+    bvLog('picker div injected — ' + el.outerHTML);
 
     // BV paints into our div asynchronously. Reveal the block the moment it
     // does; if nothing has appeared within 12s, treat it as a no-show.
@@ -664,15 +698,27 @@
       if(el.children.length || el.textContent.trim()){
         clearInterval(bvPoll); bvPoll = null;
         bvBlock.classList.add('show');
+        bvLog('Bazaarvoice rendered into the picker after ' + waited + 'ms — visible');
       } else if(waited >= 12000){
+        bvLog('bv.js is on the page but rendered nothing in 12s. Usual causes: Product ' +
+              'Picker not enabled in the BV Style Editor, or no category/family mappings ' +
+              'in the product feed.');
         bvGiveUp();
       }
     }, 400);
   }
 
+  bvLog('config: clientName=' + (BV.clientName || '(blank — picker disabled)') +
+        ' siteId=' + BV.siteId + ' environment=' + BV.environment +
+        ' locale=' + BV.locale + ' campaignId=' + BV.campaignId +
+        ' categoryId=' + (BV.categoryId || '(none)'));
+
   // With Bazaarvoice switched off, the retailer link is the ask — still on this
   // screen, not the confirmation one.
-  if(!bvEnabled) bvFailed = true;
+  if(!bvEnabled){
+    bvFailed = true;
+    bvLog('clientName is blank, so bv.js is never requested. Falling back to the retailer link.');
+  }
   bvBought.addEventListener('change', function(){ if(bvFailed) bvShowRetailer(); });
 
   if(bvEnabled){
