@@ -100,6 +100,22 @@ The three answers it distinguishes:
 If the panel doesn't appear at all, the deployed build predates this change —
 check the commit the deployment was built from.
 
+When `bv.js` loads but draws nothing, the panel goes further: it lists the `BV`
+globals bv.js defined, says whether `BV.ui()` exists, tees any Bazaarvoice
+console errors into the panel (handy on a phone with no devtools), and then
+tries the documented imperative path, `BV.ui('rr','submit_generic')`, as a
+second opinion. If that draws something the declarative `data-bv-show` div is at
+fault; if neither draws, **Product Picker isn't deployed to this zone or nothing
+is mapped in the catalog** — which is a Bazaarvoice-side fix, not a code one.
+The imperative attempt runs only under `?bvdebug=1`, since it can open a
+lightbox.
+
+**Status as of the first live test (`bootz-warranty-phi.vercel.app`):** `bv.js`
+loaded OK in 118 ms, so `clientName` / `siteId` / `environment` / `locale` are
+all correct and the deployment zone resolves. The picker div was in the DOM
+before bv.js executed. Nothing rendered in 12 s. That puts the remaining fault
+entirely on the Bazaarvoice configuration — see the two prerequisites above.
+
 > **Not yet seen working.** Outbound access to `apps.bazaarvoice.com` is blocked
 > from the development sandbox (the proxy returns 403 on the CONNECT), so the
 > picker listing real products has never been observed. What *has* been verified
