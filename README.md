@@ -110,6 +110,19 @@ is mapped in the catalog** — which is a Bazaarvoice-side fix, not a code one.
 The imperative attempt runs only under `?bvdebug=1`, since it can open a
 lightbox.
 
+Under `?bvdebug=1` only, **`?bvcategory=X`** and **`?bvfamily=X`** override the
+config for one page load, so `ExternalId`s can be tried against the live
+catalogue without a redeploy between guesses:
+
+```
+?bvdebug=1&bvcategory=BV_MISCELLANEOUS
+?bvdebug=1&bvfamily=BZ011-5300
+```
+
+(`BV_MISCELLANEOUS` is the default category Bazaarvoice assigns products to when
+a catalogue defines no categories of its own — worth trying first.) The two are
+mutually exclusive; supplying both warns and uses the family.
+
 **Status as of the first live test (`bootz-warranty-phi.vercel.app`):** `bv.js`
 loaded OK in 118 ms, so `clientName` / `siteId` / `environment` / `locale` are
 all correct and the deployment zone resolves. The picker div was in the DOM

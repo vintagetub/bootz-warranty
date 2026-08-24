@@ -763,6 +763,22 @@
     }, 400);
   }
 
+  /* In debug mode, ?bvcategory=X / ?bvfamily=X override the config for one page
+     load, so category and family ExternalIds can be tried against the live
+     catalogue without a redeploy between each guess. */
+  if(bvDebug){
+    var bvQ = function(name){
+      var m = new RegExp('[?&]' + name + '=([^&#]*)').exec(location.search);
+      return m ? decodeURIComponent(m[1]) : null;
+    };
+    var qCat = bvQ('bvcategory'), qFam = bvQ('bvfamily');
+    if(qCat !== null){ BV.categoryId = qCat; bvLog('URL override: categoryId=' + (qCat || '(cleared)')); }
+    if(qFam !== null){ bvLog('URL override: familyProductId=' + qFam); }
+    if(qCat !== null && qFam !== null)
+      bvLog('WARNING: category and family are mutually exclusive — BV errors if both are set. Family wins below.');
+    window.__bvQueryFamily = qFam;
+  }
+
   bvLog('config: clientName=' + (BV.clientName || '(blank — picker disabled)') +
         ' siteId=' + BV.siteId + ' environment=' + BV.environment +
         ' locale=' + BV.locale + ' campaignId=' + BV.campaignId +
@@ -778,7 +794,7 @@
 
   if(bvEnabled){
     bvLoadScript(bvGiveUp);
-    bvRender(BV_FAMILY[family.value] || '');
+    bvRender(window.__bvQueryFamily || BV_FAMILY[family.value] || '');
 
     // Re-rendering throws away whatever Bazaarvoice currently has on screen, so
     // stop doing it the moment the customer touches the picker — losing a
